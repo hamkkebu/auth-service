@@ -1,0 +1,2 @@
+INSERT INTO tbl_account_taste (taste_account_id, taste_account_fname, taste_account_lname, taste_account_country, taste_account_city, taste_account_state, taste_account_phone)
+VALUES ('k1m743hyun', 'Taehyun', 'Kim', '대한민국', '경기도', '수원시', '+82 10-1234-5678');
