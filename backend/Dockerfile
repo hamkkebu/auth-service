@@ -1,14 +1,37 @@
-FROM openjdk:17-jdk-alpine AS builder
-COPY gradlew .
-COPY gradle gradle
-COPY build.gradle .
-COPY settings.gradle .
-COPY src src
-RUN chmod +x ./gradlew
-RUN ./gradlew bootJar
+# Multi-stage build for Spring Boot application with submodule support
 
-FROM openjdk:17-jdk-alpine
-COPY --from=builder build/libs/*.jar app.jar
+# Stage 1: Build with Gradle
+FROM gradle:8.5-jdk17 AS builder
 
+WORKDIR /app
+
+# Copy gradle wrapper and configuration
+COPY backend/gradlew backend/gradlew.bat ./
+COPY backend/gradle ./gradle
+COPY backend/build.gradle backend/settings.gradle ./
+
+# Copy common submodule (boilerplate)
+COPY common ./common
+
+# Download dependencies (cache layer)
+RUN gradle dependencies --no-daemon -PdockerBuild=true || true
+
+# Copy source code
+COPY backend/src ./src
+
+# Build application with dockerBuild property (skip tests for faster build)
+RUN gradle clean bootJar --no-daemon -x test -PdockerBuild=true
+
+# Stage 2: Runtime
+FROM amazoncorretto:17-alpine
+
+WORKDIR /app
+
+# Copy the built JAR from builder stage
+COPY --from=builder /app/build/libs/*.jar app.jar
+
+# Expose port
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "/app.jar"]
+
+# Set entrypoint
+ENTRYPOINT ["java", "-jar", "app.jar"]
