@@ -1,22 +1,25 @@
-version: "3.8"
-
 services:
   database:
     image: mysql:8.0
+    platform: linux/amd64
     container_name: hamkkebu-auth-service-db
     ports:
-      - "3306:3306"
+      - "${DB_PORT:-3306}:3306"
     environment:
-      - MYSQL_ROOT_PASSWORD=root
-      - MYSQL_DATABASE=hamkkebu_auth
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-root}
+      - MYSQL_DATABASE=${DB_NAME:-hamkkebu_auth}
+    command:
+      - --innodb-use-native-aio=0
+      - --innodb-flush-method=fsync
+      - --default-authentication-plugin=mysql_native_password
     volumes:
-      - ./db/data:/var/lib/mysql
+      - mysql-data:/var/lib/mysql
       - ./backend/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
       - ./backend/src/main/resources/data.sql:/docker-entrypoint-initdb.d/2-data.sql
     networks:
       - hamkkebu-auth-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-root}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -29,13 +32,15 @@ services:
     ports:
       - "8080:8080"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://database:3306/hamkkebu_auth?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8
+      SPRING_DATASOURCE_URL: jdbc:mysql://database:3306/${DB_NAME:-hamkkebu_auth}?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8
       SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: root
-      JWT_SECRET: ThisIsADevelopmentSecretKeyPleaseChangeInProduction32Bytes
-      REDIS_HOST: localhost
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      JWT_SECRET: ${JWT_SECRET}
+      REDIS_HOST: host.docker.internal
       REDIS_PORT: 6379
       REDIS_PASSWORD: ""
+      LOGIN_MAX_ATTEMPTS: ${LOGIN_MAX_ATTEMPTS:-20}
+      LOGIN_BLOCK_DURATION: ${LOGIN_BLOCK_DURATION:-3}
     restart: always
     depends_on:
       database:
@@ -59,3 +64,6 @@ services:
 networks:
   hamkkebu-auth-network:
     driver: bridge
+
+volumes:
+  mysql-data:
