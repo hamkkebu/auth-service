@@ -37,13 +37,12 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
-    private final PasswordValidator passwordValidator;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenWhitelistService refreshTokenWhitelistService;
     private final LoginAttemptService loginAttemptService;
 
-    @Value("${jwt.refresh-token-validity:604800000}") // 7일 (밀리초)
+    @Value("${jwt.refresh-token-validity:#{7 * 24 * 60 * 60 * 1000}}") // 7일 (밀리초)
     private long refreshTokenValidity;
 
     // SECURITY: Timing Attack 방어를 위한 더미 비밀번호 해시 (BCrypt 12 rounds)
@@ -92,22 +91,35 @@ public class AuthService {
             passwordEncoder.matches(request.getPassword(), DUMMY_PASSWORD_HASH);
         }
 
-        // SECURITY: User Enumeration 방지
-        // 사용자 미존재와 비밀번호 불일치를 동일한 메시지로 처리
+        // 로그인 실패 처리
         if (!userExists || !passwordMatches) {
             loginAttemptService.recordLoginAttempt(request.getUsername());
             int remaining = loginAttemptService.getRemainingAttempts(request.getUsername());
 
-            log.warn("Login failed: userId={}, remaining={}", request.getUsername(), remaining);
+            log.warn("Login failed: userId={}, userExists={}, remaining={}",
+                request.getUsername(), userExists, remaining);
 
+            // 사용자가 존재하지 않는 경우 (회원가입 유도를 위해 별도 에러 코드 사용)
+            if (!userExists) {
+                throw new BusinessException(
+                    ErrorCode.USER_NOT_FOUND,
+                    "등록되지 않은 아이디입니다. 회원가입을 진행해주세요."
+                );
+            }
+
+            // 비밀번호 불일치
             throw new BusinessException(
                 ErrorCode.AUTHENTICATION_FAILED,
-                String.format("아이디 또는 비밀번호가 일치하지 않습니다. (남은 시도: %d회)", remaining)
+                String.format("비밀번호가 일치하지 않습니다. (남은 시도: %d회)", remaining)
             );
         }
 
         // 로그인 성공: 시도 횟수 초기화
         loginAttemptService.resetLoginAttempts(request.getUsername());
+
+        // SECURITY: 마지막 로그인 시간 업데이트 (Audit Trail)
+        user.updateLastLoginAt();
+        userRepository.save(user);
 
         // JWT 토큰 생성 (RBAC: 사용자 권한 포함)
         String role = user.getRole().getAuthority();

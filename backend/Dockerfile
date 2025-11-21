@@ -3,15 +3,20 @@
 # Stage 1: Build with Gradle
 FROM gradle:8.5-jdk17 AS builder
 
-WORKDIR /app
+# Set up directory structure to match local development
+# backend expects common at ../common/backend
+WORKDIR /workspace
+
+# Copy common submodule first (to /workspace/common)
+COPY common ./common
+
+# Now set up the backend in /workspace/backend
+WORKDIR /workspace/backend
 
 # Copy gradle wrapper and configuration
 COPY backend/gradlew backend/gradlew.bat ./
 COPY backend/gradle ./gradle
 COPY backend/build.gradle backend/settings.gradle ./
-
-# Copy common submodule (boilerplate)
-COPY common ./common
 
 # Download dependencies (cache layer)
 RUN gradle dependencies --no-daemon -PdockerBuild=true || true
@@ -28,7 +33,7 @@ FROM amazoncorretto:17-alpine
 WORKDIR /app
 
 # Copy the built JAR from builder stage
-COPY --from=builder /app/build/libs/*.jar app.jar
+COPY --from=builder /workspace/backend/build/libs/*.jar app.jar
 
 # Expose port
 EXPOSE 8080

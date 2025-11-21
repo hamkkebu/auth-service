@@ -32,6 +32,8 @@ spring:
   sql:
     init:
       mode: always
+      schema-locations: classpath:schema.sql
+      data-locations: classpath:data.sql
 
   kafka:
     bootstrap-servers: localhost:9092
@@ -60,7 +62,7 @@ spring:
 
 # JWT 설정
 jwt:
-  secret: ${JWT_SECRET:ThisIsADevelopmentSecretKeyPleaseChangeInProduction32Bytes}
+  secret: ${JWT_SECRET:ThisIsADevelopmentSecretKeyPleaseChangeInProductionAtLeast64Characters}
   access-token-validity: ${JWT_ACCESS_TOKEN_VALIDITY:3600000}    # 1시간 (밀리초)
   refresh-token-validity: ${JWT_REFRESH_TOKEN_VALIDITY:604800000}  # 7일 (밀리초)
 

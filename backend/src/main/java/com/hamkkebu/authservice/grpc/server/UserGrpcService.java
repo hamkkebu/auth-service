@@ -100,11 +100,8 @@ public class UserGrpcService extends UserServiceGrpc.UserServiceImplBase {
         try {
             List<String> usernames = request.getUserIdsList();
 
-            // Repository에서 배치 조회
-            List<User> users = userRepository.findAll().stream()
-                .filter(user -> usernames.contains(user.getUsername()))
-                .filter(user -> !user.getIsDeleted())
-                .toList();
+            // PERFORMANCE: N+1 쿼리 최적화 - 단일 IN 쿼리로 일괄 조회
+            List<User> users = userRepository.findByUsernameInAndIsDeletedFalse(usernames);
 
             List<com.hamkkebu.authservice.grpc.user.User> protoUsers = users.stream()
                 .map(this::convertToProtoUser)
