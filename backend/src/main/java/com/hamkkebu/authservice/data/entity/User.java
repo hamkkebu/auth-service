@@ -47,6 +47,9 @@ public class User extends BaseEntity {
     @Column(name = "last_name", length = 50)
     private String lastName;
 
+    @Column(name = "nickname", length = 50)
+    private String nickname;
+
     @Column(name = "phone_number", length = 20)
     private String phoneNumber;
 
@@ -61,6 +64,9 @@ public class User extends BaseEntity {
 
     @Column(name = "street_address", length = 200)
     private String streetAddress;
+
+    @Column(name = "street_address2", length = 200)
+    private String streetAddress2;
 
     @Column(name = "postal_code", length = 20)
     private String postalCode;

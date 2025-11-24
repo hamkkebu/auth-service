@@ -22,11 +22,13 @@ public class UserResponse {
     private String email;
     private String firstName;
     private String lastName;
+    private String nickname;
     private String phoneNumber;
     private String country;
     private String city;
     private String state;
     private String streetAddress;
+    private String streetAddress2;
     private String postalCode;
     private Boolean isActive;
     private Boolean isVerified;

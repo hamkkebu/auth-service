@@ -37,6 +37,9 @@ public class UserRequest {
     @Size(max = 50, message = "성은 50자 이하여야 합니다")
     private String lastName;
 
+    @Size(max = 50, message = "닉네임은 50자 이하여야 합니다")
+    private String nickname;
+
     // Frontend에서는 "phone"으로 전송하므로 매핑
     @JsonProperty("phone")
     @Size(max = 20, message = "전화번호는 20자 이하여야 합니다")
@@ -55,6 +58,11 @@ public class UserRequest {
     @JsonProperty("street1")
     @Size(max = 200, message = "주소는 200자 이하여야 합니다")
     private String streetAddress;
+
+    // Frontend에서는 "street2"로 전송 (추가 주소)
+    @JsonProperty("street2")
+    @Size(max = 200, message = "추가 주소는 200자 이하여야 합니다")
+    private String streetAddress2;
 
     // Frontend에서는 "zip"으로 전송하므로 매핑
     @JsonProperty("zip")

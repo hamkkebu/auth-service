@@ -5,6 +5,9 @@ spring:
   application:
     name: auth-service
 
+  profiles:
+    active: dev
+
   # gRPC autoconfiguration 비활성화 (auth-service에서는 gRPC 불필요)
   autoconfigure:
     exclude:
