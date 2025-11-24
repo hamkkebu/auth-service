@@ -95,27 +95,20 @@ export default defineComponent({
 
         const data = response.data.data;
 
-        // 인증 정보 저장 (액세스 토큰 + 리프레시 토큰 + 권한 포함)
+        // 인증 정보 저장 (액세스 토큰 + 리프레시 토큰 포함)
         login(
           {
             username: data.username,
             firstName: data.firstName,
             lastName: data.lastName,
             email: data.email ?? undefined,
-            role: data.role,
           },
           data.token.accessToken,
           data.token.refreshToken
         );
 
-        // 권한에 따라 다른 페이지로 이동
-        if (data.role === 'ADMIN' || data.role === 'DEVELOPER') {
-          // 관리자/개발자는 관리자 대시보드로
-          router.push(ROUTES.ADMIN_DASHBOARD);
-        } else {
-          // 일반 사용자는 사용자 정보 페이지로
-          router.push(ROUTES.USER_INFO);
-        }
+        // 사용자 정보 페이지로 이동
+        router.push(ROUTES.USER_INFO);
       } catch (error: any) {
         // 사용자가 존재하지 않는 경우 (USER_NOT_FOUND: USER-101)
         if (error.response?.data?.error?.code === 'USER-101') {
