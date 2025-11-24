@@ -10,17 +10,14 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 @ComponentScan(basePackages = {
 	"com.hamkkebu.authservice",
-	"com.hamkkebu.boilerplate"
-}, excludeFilters = @ComponentScan.Filter(
-	type = FilterType.ASPECTJ,
-	pattern = {
-		"com.hamkkebu.boilerplate.service.*",
-		"com.hamkkebu.boilerplate.controller.*",
-		"com.hamkkebu.boilerplate.listener.*",
-		"com.hamkkebu.boilerplate.data.*",
-		"com.hamkkebu.boilerplate.repository.*"
-	}
-))
+	"com.hamkkebu.boilerplate.common",
+	"com.hamkkebu.boilerplate.config"
+}, excludeFilters = {
+	@ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = {
+		com.hamkkebu.boilerplate.common.scheduler.OutboxEventScheduler.class,
+		com.hamkkebu.boilerplate.common.publisher.OutboxEventPublisher.class
+	})
+})
 public class AuthServiceApplication {
 
 	public static void main(String[] args) {
