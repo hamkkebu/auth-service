@@ -9,6 +9,26 @@ import type { AuthUser } from '@/types/domain.types';
 const currentUser = ref<AuthUser | null>(null);
 const isAuthenticated = computed(() => currentUser.value !== null);
 
+/**
+ * 앱 시작 시 localStorage에서 사용자 정보 자동 복원
+ */
+const initializeAuth = () => {
+  const userJson = localStorage.getItem('currentUser');
+  if (userJson) {
+    try {
+      currentUser.value = JSON.parse(userJson);
+    } catch (error) {
+      console.error('Failed to initialize auth:', error);
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('currentUser');
+    }
+  }
+};
+
+// 모듈 로드 시 자동으로 사용자 정보 복원
+initializeAuth();
+
 export function useAuth() {
   /**
    * 로그인

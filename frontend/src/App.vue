@@ -6,22 +6,13 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, onMounted } from 'vue';
+import { defineComponent } from 'vue';
 import NavBar from '@/components/views/NavBar.vue';
-import { useAuth } from '@/composables/useAuth';
 
 export default defineComponent({
   name: 'App',
   components: {
     NavBar,
-  },
-  setup() {
-    const { restoreUser } = useAuth();
-
-    onMounted(() => {
-      // 페이지 로드 시 localStorage에서 사용자 정보 복원
-      restoreUser();
-    });
   },
 });
 </script>

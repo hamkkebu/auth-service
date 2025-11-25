@@ -142,9 +142,9 @@ export default defineComponent({
             },
           }),
         {
-          onSuccess: () => {
+          onSuccess: async () => {
             alert('회원 탈퇴가 완료되었습니다.');
-            logout();
+            await logout();
             router.push(ROUTES.LOGIN);
           },
         }
