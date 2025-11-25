@@ -102,13 +102,18 @@ export default defineComponent({
             firstName: data.firstName,
             lastName: data.lastName,
             email: data.email ?? undefined,
+            role: data.role,
           },
           data.token.accessToken,
           data.token.refreshToken
         );
 
-        // 사용자 정보 페이지로 이동
-        router.push(ROUTES.USER_INFO);
+        // 권한에 따라 다른 페이지로 이동
+        if (data.role === 'ADMIN' || data.role === 'DEVELOPER') {
+          router.push(ROUTES.ADMIN_DASHBOARD);
+        } else {
+          router.push(ROUTES.USER_INFO);
+        }
       } catch (error: any) {
         // 사용자가 존재하지 않는 경우 (USER_NOT_FOUND: USER-101)
         if (error.response?.data?.error?.code === 'USER-101') {
