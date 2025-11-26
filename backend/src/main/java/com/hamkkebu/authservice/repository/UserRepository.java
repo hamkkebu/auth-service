@@ -72,6 +72,31 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByUsernameInAndIsDeletedFalse(List<String> usernames);
 
     /**
+     * 사용자 ID로 삭제되지 않은 사용자 조회
+     *
+     * @param userId 사용자 ID
+     * @return User Optional
+     */
+    Optional<User> findByUserIdAndIsDeletedFalse(Long userId);
+
+    /**
+     * 사용자 ID 존재 여부 확인 (삭제되지 않은 사용자)
+     *
+     * @param userId 사용자 ID
+     * @return 존재하면 true
+     */
+    boolean existsByUserIdAndIsDeletedFalse(Long userId);
+
+    /**
+     * 여러 사용자 ID로 삭제되지 않은 사용자 일괄 조회
+     * (gRPC 배치 조회용)
+     *
+     * @param userIds 사용자 ID 리스트
+     * @return User 리스트
+     */
+    List<User> findByUserIdInAndIsDeletedFalse(List<Long> userIds);
+
+    /**
      * 삭제되지 않은 전체 사용자 조회
      *
      * @return User 리스트

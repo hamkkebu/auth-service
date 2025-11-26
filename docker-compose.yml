@@ -4,7 +4,9 @@ services:
     platform: linux/amd64
     container_name: hamkkebu-auth-service-db
     ports:
-      - "${DB_PORT:-3306}:3306"
+      # Auth Service는 MySQL 3307 포트 사용 (Boilerplate는 3306)
+      # SECURITY: 포트를 127.0.0.1로 바인딩 (외부 접근 차단)
+      - "127.0.0.1:${DB_PORT:-3307}:3306"
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-root}
       - MYSQL_DATABASE=${DB_NAME:-hamkkebu_auth}
@@ -30,8 +32,13 @@ services:
       dockerfile: backend/Dockerfile
     container_name: hamkkebu-auth-service-backend
     ports:
-      - "8080:8080"
+      # auth-service는 8081 포트 사용 (boilerplate는 8080)
+      - "${BACKEND_PORT:-8081}:8081"
+      # gRPC 포트 (auth-service는 9091, boilerplate는 9090)
+      - "${GRPC_PORT:-9091}:9091"
     environment:
+      # 개발 프로필 활성화 (포트 설정 적용)
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
       SPRING_DATASOURCE_URL: jdbc:mysql://database:3306/${DB_NAME:-hamkkebu_auth}?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
@@ -54,7 +61,8 @@ services:
       dockerfile: Dockerfile
     container_name: hamkkebu-auth-service-frontend
     ports:
-      - "80:80"
+      # Auth Service Frontend는 3001 포트 사용 (Boilerplate는 3000)
+      - "${FRONTEND_PORT:-3001}:80"
     restart: always
     depends_on:
       - backend

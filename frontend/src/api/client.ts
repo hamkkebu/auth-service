@@ -23,14 +23,35 @@ let failedQueue: Array<{
 }> = [];
 
 /**
+ * 인증이 필요 없는 API 엔드포인트 목록
+ */
+const PUBLIC_ENDPOINTS = [
+  '/api/v1/auth/login',
+  '/api/v1/auth/refresh',
+  '/api/v1/auth/validate',
+  '/api/v1/users/check/',  // 아이디/닉네임/이메일 중복 확인
+  '/api/v1/samples/check/',
+];
+
+/**
  * 요청 인터셉터
  */
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // 토큰이 있으면 헤더에 추가
-    const token = localStorage.getItem('authToken');
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
+    // 인증이 필요 없는 엔드포인트인지 확인
+    const isPublicEndpoint = PUBLIC_ENDPOINTS.some(endpoint =>
+      config.url?.includes(endpoint)
+    );
+
+    // 회원가입 API (POST /api/v1/users)도 인증 불필요
+    const isSignupEndpoint = config.url === '/api/v1/users' && config.method === 'post';
+
+    // 인증이 필요한 API에만 토큰 추가
+    if (!isPublicEndpoint && !isSignupEndpoint) {
+      const token = localStorage.getItem('authToken');
+      if (token && config.headers) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
 
     // 요청 로깅 (개발 환경에서만)
@@ -118,6 +139,18 @@ apiClient.interceptors.response.use(
   },
   async (error: AxiosError<ApiResponse<any>>) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+
+    // Public endpoint인지 확인 (인증이 필요 없는 API)
+    const isPublicEndpoint = PUBLIC_ENDPOINTS.some(endpoint =>
+      originalRequest.url?.includes(endpoint)
+    );
+    const isSignupEndpoint = originalRequest.url === '/api/v1/users' && originalRequest.method === 'post';
+
+    // Public endpoint에서는 401 에러 처리를 건너뜀 (토큰 갱신 불필요)
+    if (isPublicEndpoint || isSignupEndpoint) {
+      // Public API에서 에러가 발생한 경우 단순히 reject
+      return Promise.reject(error);
+    }
 
     // 401 에러이고, refresh token이 있으며, 재시도하지 않은 요청인 경우
     if (

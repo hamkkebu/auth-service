@@ -26,7 +26,7 @@ import java.util.Optional;
  *                              Database
  * </pre>
  *
- * <p>Port: 9090 (기본값, application.yml에서 변경 가능)</p>
+ * <p>Port: 9091 (auth-service 기본값, application.yml에서 변경 가능)</p>
  *
  * <p>예시 호출:</p>
  * <pre>
@@ -53,15 +53,16 @@ public class UserGrpcService extends UserServiceGrpc.UserServiceImplBase {
      */
     @Override
     public void getUser(GetUserRequest request, StreamObserver<GetUserResponse> responseObserver) {
-        log.info("[gRPC] GetUser request: userId={}", request.getUserId());
+        long userId = request.getUserId();
+        log.info("[gRPC] GetUser request: userId={}", userId);
 
         try {
-            // Repository 직접 조회 (username으로 조회)
-            Optional<User> userOpt = userRepository.findByUsernameAndIsDeletedFalse(request.getUserId());
+            // Repository에서 userId(Long)로 조회
+            Optional<User> userOpt = userRepository.findByUserIdAndIsDeletedFalse(userId);
 
             if (userOpt.isEmpty()) {
                 GetUserResponse response = GetUserResponse.newBuilder()
-                    .setErrorMessage("User not found: " + request.getUserId())
+                    .setErrorMessage("User not found: " + userId)
                     .build();
                 responseObserver.onNext(response);
                 responseObserver.onCompleted();
@@ -78,10 +79,10 @@ public class UserGrpcService extends UserServiceGrpc.UserServiceImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-            log.info("[gRPC] GetUser success: userId={}", request.getUserId());
+            log.info("[gRPC] GetUser success: userId={}", userId);
 
         } catch (Exception e) {
-            log.error("[gRPC] GetUser failed: userId={}, error={}", request.getUserId(), e.getMessage(), e);
+            log.error("[gRPC] GetUser failed: userId={}, error={}", userId, e.getMessage(), e);
             GetUserResponse response = GetUserResponse.newBuilder()
                 .setErrorMessage("Internal error: " + e.getMessage())
                 .build();
@@ -98,10 +99,11 @@ public class UserGrpcService extends UserServiceGrpc.UserServiceImplBase {
         log.info("[gRPC] GetUsers request: count={}", request.getUserIdsCount());
 
         try {
-            List<String> usernames = request.getUserIdsList();
+            // proto의 repeated int64 user_ids → List<Long>
+            List<Long> userIds = request.getUserIdsList();
 
             // PERFORMANCE: N+1 쿼리 최적화 - 단일 IN 쿼리로 일괄 조회
-            List<User> users = userRepository.findByUsernameInAndIsDeletedFalse(usernames);
+            List<User> users = userRepository.findByUserIdInAndIsDeletedFalse(userIds);
 
             List<com.hamkkebu.authservice.grpc.user.User> protoUsers = users.stream()
                 .map(this::convertToProtoUser)
@@ -114,7 +116,7 @@ public class UserGrpcService extends UserServiceGrpc.UserServiceImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-            log.info("[gRPC] GetUsers success: found={}/{}", users.size(), usernames.size());
+            log.info("[gRPC] GetUsers success: found={}/{}", users.size(), userIds.size());
 
         } catch (Exception e) {
             log.error("[gRPC] GetUsers failed: error={}", e.getMessage(), e);
@@ -131,11 +133,12 @@ public class UserGrpcService extends UserServiceGrpc.UserServiceImplBase {
      */
     @Override
     public void userExists(UserExistsRequest request, StreamObserver<UserExistsResponse> responseObserver) {
-        log.debug("[gRPC] UserExists request: userId={}", request.getUserId());
+        long userId = request.getUserId();
+        log.debug("[gRPC] UserExists request: userId={}", userId);
 
         try {
             // Repository로 존재 여부 확인 (Soft Delete 체크 포함)
-            boolean exists = userRepository.existsByUsernameAndIsDeletedFalse(request.getUserId());
+            boolean exists = userRepository.existsByUserIdAndIsDeletedFalse(userId);
 
             UserExistsResponse response = UserExistsResponse.newBuilder()
                 .setExists(exists)
@@ -145,7 +148,7 @@ public class UserGrpcService extends UserServiceGrpc.UserServiceImplBase {
             responseObserver.onCompleted();
 
         } catch (Exception e) {
-            log.error("[gRPC] UserExists failed: userId={}, error={}", request.getUserId(), e.getMessage(), e);
+            log.error("[gRPC] UserExists failed: userId={}, error={}", userId, e.getMessage(), e);
             UserExistsResponse response = UserExistsResponse.newBuilder()
                 .setExists(false)
                 .setErrorMessage("Internal error: " + e.getMessage())
@@ -160,13 +163,23 @@ public class UserGrpcService extends UserServiceGrpc.UserServiceImplBase {
      */
     private com.hamkkebu.authservice.grpc.user.User convertToProtoUser(User user) {
         return com.hamkkebu.authservice.grpc.user.User.newBuilder()
-            .setId(String.valueOf(user.getUserId()))  // PK
-            .setUsername(user.getUsername())
+            .setUserId(user.getUserId())  // int64 user_id
+            .setUsername(user.getUsername() != null ? user.getUsername() : "")
             .setEmail(user.getEmail() != null ? user.getEmail() : "")
-            .setNickname("")  // User entity doesn't have nickname field
+            .setFirstName(user.getFirstName() != null ? user.getFirstName() : "")
+            .setLastName(user.getLastName() != null ? user.getLastName() : "")
+            .setPhoneNumber(user.getPhoneNumber() != null ? user.getPhoneNumber() : "")
+            .setCountry(user.getCountry() != null ? user.getCountry() : "")
+            .setCity(user.getCity() != null ? user.getCity() : "")
+            .setState(user.getState() != null ? user.getState() : "")
+            .setStreetAddress(user.getStreetAddress() != null ? user.getStreetAddress() : "")
+            .setPostalCode(user.getPostalCode() != null ? user.getPostalCode() : "")
+            .setRole(user.getRole() != null ? user.getRole().name() : "")
+            .setIsActive(user.getIsActive() != null ? user.getIsActive() : false)
+            .setIsVerified(user.getIsVerified() != null ? user.getIsVerified() : false)
             .setCreatedAt(user.getCreatedAt() != null ? user.getCreatedAt().format(FORMATTER) : "")
             .setUpdatedAt(user.getUpdatedAt() != null ? user.getUpdatedAt().format(FORMATTER) : "")
-            .setStatus(user.getIsActive() ? UserStatus.ACTIVE : UserStatus.INACTIVE)
+            .setStatus(user.getIsActive() != null && user.getIsActive() ? UserStatus.ACTIVE : UserStatus.INACTIVE)
             .build();
     }
 }

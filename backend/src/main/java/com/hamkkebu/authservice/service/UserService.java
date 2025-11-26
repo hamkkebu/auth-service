@@ -4,14 +4,17 @@ import com.hamkkebu.authservice.data.dto.DuplicateCheckResponse;
 import com.hamkkebu.authservice.data.dto.UserRequest;
 import com.hamkkebu.authservice.data.dto.UserResponse;
 import com.hamkkebu.authservice.data.entity.User;
+import com.hamkkebu.authservice.data.event.UserRegisteredEvent;
 import com.hamkkebu.authservice.data.mapper.UserMapper;
 import com.hamkkebu.authservice.repository.UserRepository;
 import com.hamkkebu.boilerplate.common.enums.Role;
 import com.hamkkebu.boilerplate.common.exception.BusinessException;
 import com.hamkkebu.boilerplate.common.exception.ErrorCode;
+import com.hamkkebu.boilerplate.common.publisher.EventPublisher;
 import com.hamkkebu.boilerplate.common.security.PasswordValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +33,10 @@ public class UserService {
     private final UserMapper userMapper;
     private final PasswordValidator passwordValidator;
     private final PasswordEncoder passwordEncoder;
+    private final EventPublisher eventPublisher;
+
+    @Value("${kafka.topics.user-events:user.events}")
+    private String userEventsTopic;
 
     /**
      * 사용자 등록 (회원가입)
@@ -79,6 +86,9 @@ public class UserService {
 
         User savedUser = userRepository.save(user);
         log.info("사용자 등록 완료: userId={}, username={}", savedUser.getUserId(), savedUser.getUsername());
+
+        // 회원가입 이벤트 발행 (Kafka 연결 실패 시 무시, 비동기 처리)
+        publishUserRegisteredEventAsync(savedUser.getUserId());
 
         return userMapper.toDto(savedUser);
     }
@@ -159,6 +169,21 @@ public class UserService {
         user.delete();
         userRepository.save(user);
         log.info("사용자 탈퇴 완료: username={}", username);
+    }
+
+    /**
+     * 회원가입 이벤트 비동기 발행 (Kafka 연결 실패 시 무시)
+     */
+    private void publishUserRegisteredEventAsync(Long userId) {
+        new Thread(() -> {
+            try {
+                UserRegisteredEvent event = UserRegisteredEvent.of(userId);
+                eventPublisher.publish(userEventsTopic, event);
+                log.info("회원가입 이벤트 발행 완료: userId={}, eventId={}", userId, event.getEventId());
+            } catch (Exception e) {
+                log.warn("회원가입 이벤트 발행 실패 (Kafka 연결 불가): userId={}, error={}", userId, e.getMessage());
+            }
+        }).start();
     }
 
 }

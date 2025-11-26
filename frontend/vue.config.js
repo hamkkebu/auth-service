@@ -8,7 +8,8 @@ module.exports = defineConfig({
     // Proxy only API requests to backend
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',
+        // auth-service backend은 개발 환경에서 8081 포트 사용
+        target: process.env.VUE_APP_API_URL || 'http://localhost:8081',
         changeOrigin: true,
         ws: false,
       }

@@ -1,0 +1,149 @@
+# 개발 환경 설정 (Development Profile)
+# 활성화: --spring.profiles.active=dev 또는 SPRING_PROFILES_ACTIVE=dev
+
+server:
+  # auth-service는 8081 포트 사용 (boilerplate는 8080)
+  port: 8081
+
+spring:
+  application:
+    name: auth-service-dev
+
+  datasource:
+    # Auth Service는 3307 포트 사용 (Boilerplate는 3306)
+    url: jdbc:mysql://localhost:3307/hamkkebu_auth?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+        use_sql_comments: true
+
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+      data-locations: classpath:data.sql
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      group-id: auth-service-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        # SECURITY: "*" 사용 시 Insecure Deserialization 취약점 발생
+        spring.json.trusted.packages: "com.hamkkebu.authservice.*,com.hamkkebu.boilerplate.*"
+
+  # Redis 설정
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: ""
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+
+# Kafka 토픽 설정
+kafka:
+  topics:
+    user-events: user.events
+
+# JWT 설정 (개발 환경)
+jwt:
+  secret: ThisIsADevelopmentSecretKeyPleaseChangeInProductionAtLeast64Characters
+  access-token-validity: 3600000    # 1시간 (밀리초)
+  refresh-token-validity: 604800000  # 7일 (밀리초)
+
+# gRPC 서버 설정
+grpc:
+  server:
+    # auth-service gRPC는 9091 포트 사용 (다른 서비스와 충돌 방지)
+    port: 9091
+    max-inbound-message-size: 4194304  # 4MB
+    max-inbound-metadata-size: 8192    # 8KB
+
+# Actuator 개발 환경 설정
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,env
+  endpoint:
+    health:
+      show-details: always
+  health:
+    redis:
+      enabled: false
+
+# 로깅 설정 (개발 환경)
+logging:
+  level:
+    com.hamkkebu.authservice: DEBUG
+    com.hamkkebu.authservice.common: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.apache.kafka: INFO
+    org.springframework.kafka: DEBUG
+
+# CORS 개발 환경 설정
+cors:
+  allowed-origins:
+    # auth-service가 8081 포트를 사용하므로 추가
+    - "http://localhost:3000"
+    - "http://localhost:3001"
+    - "http://localhost:8080"
+    - "http://localhost:8081"
+    - "http://127.0.0.1:3000"
+    - "http://127.0.0.1:3001"
+    - "http://127.0.0.1:8080"
+    - "http://127.0.0.1:8081"
+
+# SpringDoc OpenAPI (Swagger) 설정
+springdoc:
+  swagger-ui:
+    # Swagger UI 활성화
+    enabled: true
+    # Swagger UI 경로
+    path: /swagger-ui.html
+    # API 문서를 펼쳐서 표시
+    doc-expansion: none
+    # 태그별로 정렬
+    tags-sorter: alpha
+    # 작업별로 정렬
+    operations-sorter: alpha
+    # 요청 duration 표시
+    display-request-duration: true
+    # Deep linking 활성화
+    deep-linking: true
+    # Try it out 기본 활성화
+    try-it-out-enabled: true
+  api-docs:
+    # API 문서 활성화
+    enabled: true
+    # API 문서 경로
+    path: /v3/api-docs
+  # API 그룹화 설정
+  group-configs:
+    - group: auth-service
+      paths-to-match: /api/v1/**
+      packages-to-scan: com.hamkkebu.authservice
+  # 기본 produces/consumes 설정
+  default-produces-media-type: application/json
+  default-consumes-media-type: application/json
