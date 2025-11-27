@@ -140,6 +140,7 @@ export default defineComponent({
             firstName: data.firstName,
             lastName: data.lastName,
             email: data.email ?? undefined,
+            role: data.role,
           },
           data.token.accessToken,
           data.token.refreshToken

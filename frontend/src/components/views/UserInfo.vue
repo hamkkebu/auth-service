@@ -1,9 +1,22 @@
 <template>
   <div class="userinfo-container">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
     <div class="userinfo-card">
+      <div class="userinfo-brand">
+        <div class="brand-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </div>
+      </div>
+
       <div class="userinfo-header">
         <h1 class="userinfo-title">My Profile</h1>
-        <p class="userinfo-subtitle">내 정보</p>
+        <p class="userinfo-subtitle">내 정보를 확인하세요</p>
       </div>
 
       <div class="action-bar">
@@ -145,7 +158,7 @@ export default defineComponent({
       );
 
       if (data) {
-        result.value = [data]; // 단일 사용자 정보를 배열로 변환
+        result.value = [data];
       }
     };
 
@@ -188,57 +201,74 @@ export default defineComponent({
 
 <style scoped>
 .userinfo-container {
-  min-height: 100vh;
+  min-height: calc(100vh - 64px);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 60px 20px;
+  padding: 40px 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.4;
+  animation: float 20s ease-in-out infinite;
+}
+
+.orb-1 { width: 500px; height: 500px; background: linear-gradient(135deg, #667eea, #764ba2); top: -150px; right: -150px; }
+.orb-2 { width: 400px; height: 400px; background: linear-gradient(135deg, #11998e, #38ef7d); bottom: -100px; left: -100px; animation-delay: -7s; }
+.orb-3 { width: 300px; height: 300px; background: linear-gradient(135deg, #f093fb, #f5576c); top: 40%; left: 30%; animation-delay: -14s; }
+
+@keyframes float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-30px, 30px) scale(0.95); }
 }
 
 .userinfo-card {
-  background: white;
-  border-radius: 20px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  padding: 48px 40px;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  padding: 40px;
   width: 100%;
-  max-width: 1600px;
-  margin: 0 auto;
-  animation: slideUp 0.5s ease-out;
+  max-width: 600px;
+  position: relative;
+  z-index: 1;
+  animation: slideUp 0.6s ease-out;
 }
 
 @keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.userinfo-header {
-  text-align: center;
-  margin-bottom: 32px;
+.userinfo-brand { display: flex; justify-content: center; margin-bottom: 20px; }
+
+.brand-icon {
+  width: 52px; height: 52px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
 }
+
+.brand-icon svg { width: 26px; height: 26px; color: white; }
+
+.userinfo-header { text-align: center; margin-bottom: 28px; }
 
 .userinfo-title {
-  font-size: 32px;
-  font-weight: 700;
-  color: #1a202c;
-  margin: 0 0 8px 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 28px; font-weight: 700;
+  background: linear-gradient(135deg, #fff, rgba(255,255,255,0.7));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text; margin: 0 0 8px 0;
 }
 
-.userinfo-subtitle {
-  color: #718096;
-  font-size: 14px;
-  margin: 0;
-}
+.userinfo-subtitle { color: rgba(255, 255, 255, 0.5); font-size: 14px; margin: 0; }
 
 .action-bar {
   display: flex;
@@ -246,48 +276,41 @@ export default defineComponent({
   align-items: center;
   margin-bottom: 24px;
   padding-bottom: 16px;
-  border-bottom: 2px solid #e2e8f0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .user-count {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #4a5568;
-  font-size: 16px;
-  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  font-weight: 500;
 }
 
-.user-count svg {
-  width: 24px;
-  height: 24px;
-  color: #667eea;
-}
+.user-count svg { width: 20px; height: 20px; color: #667eea; }
 
 .btn-download {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 20px;
-  background: #48bb78;
-  color: white;
-  border: none;
+  padding: 10px 16px;
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
   border-radius: 10px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s;
 }
 
-.btn-download svg {
-  width: 18px;
-  height: 18px;
-}
+.btn-download svg { width: 16px; height: 16px; }
 
 .btn-download:hover {
-  background: #38a169;
+  background: rgba(16, 185, 129, 0.3);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(72, 187, 120, 0.4);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
 .table-container {
@@ -295,36 +318,19 @@ export default defineComponent({
   flex-direction: column;
   gap: 16px;
   margin-bottom: 24px;
-  max-height: 600px;
-  overflow-y: auto;
-  padding-right: 8px;
-}
-
-.table-container::-webkit-scrollbar {
-  width: 8px;
-}
-
-.table-container::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 10px;
-}
-
-.table-container::-webkit-scrollbar-thumb {
-  background: #667eea;
-  border-radius: 10px;
 }
 
 .user-card {
-  background: #f7fafc;
-  border: 2px solid #e2e8f0;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
   overflow: hidden;
   transition: all 0.3s;
 }
 
 .user-card:hover {
-  border-color: #667eea;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+  border-color: rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.15);
 }
 
 .user-card-header {
@@ -332,55 +338,48 @@ export default defineComponent({
   align-items: center;
   gap: 16px;
   padding: 20px;
-  background: white;
-  border-bottom: 2px solid #e2e8f0;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .user-avatar {
-  width: 60px;
-  height: 60px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #667eea, #764ba2);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
 
-.user-avatar svg {
-  width: 32px;
-  height: 32px;
-  color: white;
-}
+.user-avatar svg { width: 28px; height: 28px; color: white; }
 
-.user-basic-info {
-  flex: 1;
-}
+.user-basic-info { flex: 1; }
 
 .user-basic-info h3 {
   margin: 0 0 4px 0;
-  font-size: 20px;
-  color: #1a202c;
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 600;
 }
 
 .user-basic-info p {
   margin: 0;
-  color: #718096;
-  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 13px;
 }
 
 .user-id-badge {
-  padding: 6px 16px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 6px 14px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
   color: white;
   border-radius: 20px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
 }
 
-.user-card-body {
-  padding: 20px;
-}
+.user-card-body { padding: 20px; }
 
 .info-grid {
   display: grid;
@@ -392,15 +391,16 @@ export default defineComponent({
   display: flex;
   gap: 12px;
   align-items: flex-start;
+  transition: transform 0.3s;
 }
 
-.info-item.full-width {
-  grid-column: 1 / -1;
-}
+.info-item:hover { transform: translateY(-2px); }
+
+.info-item.full-width { grid-column: 1 / -1; }
 
 .info-icon {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   color: #667eea;
   flex-shrink: 0;
   margin-top: 2px;
@@ -414,41 +414,39 @@ export default defineComponent({
 }
 
 .info-label {
-  font-size: 12px;
-  color: #a0aec0;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.4);
   font-weight: 600;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .info-value {
   font-size: 14px;
-  color: #2d3748;
+  color: rgba(255, 255, 255, 0.9);
   word-break: break-word;
 }
 
 .empty-state {
   text-align: center;
   padding: 60px 20px;
-  color: #a0aec0;
+  color: rgba(255, 255, 255, 0.4);
 }
 
 .empty-state svg {
-  width: 80px;
-  height: 80px;
+  width: 64px;
+  height: 64px;
   margin-bottom: 16px;
   opacity: 0.5;
 }
 
 .empty-state h3 {
-  font-size: 20px;
-  color: #718096;
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.6);
   margin: 0 0 8px 0;
 }
 
-.empty-state p {
-  font-size: 14px;
-  margin: 0;
-}
+.empty-state p { font-size: 14px; margin: 0; }
 
 .navigation-buttons {
   display: flex;
@@ -466,68 +464,50 @@ export default defineComponent({
   padding: 14px;
   border: none;
   border-radius: 12px;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s;
 }
 
 .btn-secondary svg,
-.btn-danger svg {
-  width: 18px;
-  height: 18px;
-}
+.btn-danger svg { width: 18px; height: 18px; }
 
 .btn-secondary {
-  background: white;
-  color: #667eea;
-  border: 2px solid #667eea;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .btn-secondary:hover {
-  background: #667eea;
-  color: white;
+  background: rgba(102, 126, 234, 0.2);
+  border-color: rgba(102, 126, 234, 0.3);
+  color: #667eea;
   transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
 }
 
 .btn-danger {
-  background: #f56565;
-  color: white;
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 .btn-danger:hover {
-  background: #e53e3e;
+  background: rgba(239, 68, 68, 0.3);
   transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(245, 101, 101, 0.4);
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
 }
 
-@media (max-width: 768px) {
-  .userinfo-card {
-    padding: 32px 24px;
-  }
-
-  .userinfo-title {
-    font-size: 28px;
-  }
-
-  .action-bar {
-    flex-direction: column;
-    gap: 12px;
-    align-items: stretch;
-  }
-
-  .info-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .user-card-header {
-    flex-wrap: wrap;
-  }
-
-  .user-id-badge {
-    width: 100%;
-    text-align: center;
-  }
+@media (max-width: 640px) {
+  .userinfo-card { padding: 28px 20px; }
+  .userinfo-title { font-size: 24px; }
+  .action-bar { flex-direction: column; gap: 12px; align-items: stretch; }
+  .info-grid { grid-template-columns: 1fr; }
+  .user-card-header { flex-wrap: wrap; }
+  .user-id-badge { width: 100%; text-align: center; margin-top: 8px; }
+  .navigation-buttons { flex-direction: column; }
+  .orb-1 { width: 300px; height: 300px; }
+  .orb-2 { width: 250px; height: 250px; }
+  .orb-3 { width: 180px; height: 180px; }
 }
 </style>

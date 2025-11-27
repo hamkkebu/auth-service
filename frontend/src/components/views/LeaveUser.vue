@@ -1,5 +1,9 @@
 <template>
   <div class="leave-container">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
     <div class="leave-card">
       <div class="warning-icon">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -16,7 +20,14 @@
 
       <div class="warning-message">
         <div class="warning-content">
-          <h3>탈퇴 시 유의사항</h3>
+          <h3>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+            탈퇴 시 유의사항
+          </h3>
           <ul>
             <li>계정의 모든 정보가 영구적으로 삭제됩니다</li>
             <li>삭제된 데이터는 복구할 수 없습니다</li>
@@ -29,10 +40,12 @@
         <div class="input-group">
           <label for="password" class="input-label">비밀번호 확인</label>
           <div class="input-wrapper">
-            <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-            </svg>
+            <div class="input-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+            </div>
             <input
               id="password"
               type="password"
@@ -45,8 +58,12 @@
         </div>
 
         <div class="confirmation-checkbox">
-          <label class="checkbox-label">
-            <input type="checkbox" v-model="confirmed" required />
+          <label class="checkbox-label" @click.prevent="confirmed = !confirmed">
+            <div class="custom-checkbox" :class="{ checked: confirmed }">
+              <svg v-if="confirmed" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
             <span>위 유의사항을 모두 확인했으며, 탈퇴에 동의합니다</span>
           </label>
         </div>
@@ -58,12 +75,15 @@
             </svg>
             <span>취소</span>
           </button>
-          <button type="submit" class="btn-leave" :disabled="!confirmed || !password">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="3 6 5 6 21 6"></polyline>
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-            </svg>
-            <span>탈퇴하기</span>
+          <button type="submit" class="btn-leave" :disabled="!confirmed || !password || loading">
+            <span v-if="!loading">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+              <span>탈퇴하기</span>
+            </span>
+            <span v-else class="loading-spinner"></span>
           </button>
         </div>
       </form>
@@ -89,11 +109,9 @@ export default defineComponent({
     const password = ref('');
     const confirmed = ref(false);
 
-    // 컴포넌트 마운트 시 사용자 정보 복원
     onMounted(() => {
       restoreUser();
 
-      // 로그인하지 않은 경우 로그인 페이지로 리다이렉트
       if (!currentUser.value) {
         alert('로그인이 필요합니다.');
         router.push(ROUTES.LOGIN);
@@ -168,173 +186,169 @@ export default defineComponent({
 
 <style scoped>
 .leave-container {
-  min-height: 100vh;
+  min-height: calc(100vh - 64px);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 40px 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.4;
+  animation: float 20s ease-in-out infinite;
+}
+
+.orb-1 { width: 500px; height: 500px; background: linear-gradient(135deg, #ef4444, #dc2626); top: -150px; right: -150px; }
+.orb-2 { width: 400px; height: 400px; background: linear-gradient(135deg, #f97316, #ea580c); bottom: -100px; left: -100px; animation-delay: -7s; }
+.orb-3 { width: 300px; height: 300px; background: linear-gradient(135deg, #667eea, #764ba2); top: 40%; left: 30%; animation-delay: -14s; }
+
+@keyframes float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-30px, 30px) scale(0.95); }
 }
 
 .leave-card {
-  background: white;
-  border-radius: 20px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  padding: 48px 40px;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  padding: 40px;
   width: 100%;
-  max-width: 560px;
-  animation: slideUp 0.5s ease-out;
+  max-width: 480px;
+  position: relative;
+  z-index: 1;
+  animation: slideUp 0.6s ease-out;
 }
 
 @keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .warning-icon {
-  width: 80px;
-  height: 80px;
+  width: 72px;
+  height: 72px;
   margin: 0 auto 24px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+  background: linear-gradient(135deg, #ef4444, #dc2626);
   display: flex;
   align-items: center;
   justify-content: center;
   animation: pulse 2s ease-in-out infinite;
+  box-shadow: 0 8px 32px rgba(239, 68, 68, 0.4);
 }
 
 @keyframes pulse {
-  0%, 100% {
-    transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(245, 101, 101, 0.7);
-  }
-  50% {
-    transform: scale(1.05);
-    box-shadow: 0 0 0 10px rgba(245, 101, 101, 0);
-  }
+  0%, 100% { transform: scale(1); box-shadow: 0 8px 32px rgba(239, 68, 68, 0.4); }
+  50% { transform: scale(1.05); box-shadow: 0 12px 40px rgba(239, 68, 68, 0.5); }
 }
 
-.warning-icon svg {
-  width: 48px;
-  height: 48px;
-  color: white;
-}
+.warning-icon svg { width: 36px; height: 36px; color: white; }
 
-.leave-header {
-  text-align: center;
-  margin-bottom: 24px;
-}
+.leave-header { text-align: center; margin-bottom: 24px; }
 
 .leave-title {
-  font-size: 32px;
-  font-weight: 700;
-  color: #1a202c;
-  margin: 0 0 8px 0;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 28px; font-weight: 700;
+  background: linear-gradient(135deg, #fff, rgba(255,255,255,0.7));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text; margin: 0 0 8px 0;
 }
 
-.leave-subtitle {
-  color: #718096;
-  font-size: 14px;
-  margin: 0;
-}
+.leave-subtitle { color: rgba(255, 255, 255, 0.5); font-size: 14px; margin: 0; }
 
 .warning-message {
-  background: #fff5f5;
-  border: 2px solid #feb2b2;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
   border-radius: 12px;
   padding: 20px;
   margin-bottom: 24px;
 }
 
 .warning-content h3 {
-  color: #c53030;
-  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #ef4444;
+  font-size: 15px;
   margin: 0 0 12px 0;
+  font-weight: 600;
 }
+
+.warning-content h3 svg { width: 18px; height: 18px; }
 
 .warning-content ul {
   margin: 0;
   padding-left: 20px;
-  color: #742a2a;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .warning-content li {
   margin: 8px 0;
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.5;
 }
 
-.leave-form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
+.leave-form { display: flex; flex-direction: column; gap: 20px; }
 
-.input-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
+.input-group { display: flex; flex-direction: column; gap: 8px; }
 
-.input-label {
-  font-size: 14px;
-  font-weight: 600;
-  color: #2d3748;
-}
+.input-label { font-size: 13px; font-weight: 500; color: rgba(255, 255, 255, 0.7); }
 
-.input-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
+.input-wrapper { position: relative; display: flex; align-items: center; }
 
 .input-icon {
   position: absolute;
-  left: 16px;
-  width: 20px;
-  height: 20px;
-  color: #a0aec0;
+  left: 14px;
+  width: 18px;
+  height: 18px;
+  color: rgba(255, 255, 255, 0.3);
   pointer-events: none;
-  transition: color 0.2s;
-  z-index: 1;
+  transition: color 0.3s;
+  z-index: 2;
 }
+
+.input-icon svg { width: 18px; height: 18px; }
 
 .input-field {
   width: 100%;
-  padding: 14px 16px 14px 48px;
-  border: 2px solid #e2e8f0;
-  border-radius: 12px;
-  font-size: 15px;
-  transition: all 0.2s;
+  padding: 14px 14px 14px 44px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.95);
+  transition: all 0.3s ease;
   outline: none;
-  background: #f7fafc;
 }
+
+.input-field::placeholder { color: rgba(255, 255, 255, 0.25); }
+
+.input-field:hover { border-color: rgba(255, 255, 255, 0.15); background: rgba(255, 255, 255, 0.05); }
 
 .input-field:focus {
-  border-color: #f56565;
-  background: white;
-  box-shadow: 0 0 0 3px rgba(245, 101, 101, 0.1);
+  border-color: rgba(239, 68, 68, 0.5);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
 }
 
-.input-wrapper:focus-within .input-icon {
-  color: #f56565;
-}
-
-.input-field::placeholder {
-  color: #cbd5e0;
-}
+.input-wrapper:focus-within .input-icon { color: #ef4444; }
 
 .confirmation-checkbox {
-  background: #f7fafc;
-  border: 2px solid #e2e8f0;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
   padding: 16px;
+  transition: all 0.3s;
+}
+
+.confirmation-checkbox:hover {
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 .checkbox-label {
@@ -342,22 +356,31 @@ export default defineComponent({
   align-items: center;
   gap: 12px;
   cursor: pointer;
-  color: #2d3748;
-  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
 }
 
-.checkbox-label input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
-  accent-color: #f56565;
-}
-
-.button-group {
+.custom-checkbox {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
   display: flex;
-  gap: 12px;
-  margin-top: 8px;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
 }
+
+.custom-checkbox.checked {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  border-color: #ef4444;
+}
+
+.custom-checkbox svg { width: 12px; height: 12px; color: white; }
+
+.button-group { display: flex; gap: 12px; margin-top: 8px; }
 
 .btn-cancel,
 .btn-leave {
@@ -369,72 +392,64 @@ export default defineComponent({
   padding: 14px;
   border: none;
   border-radius: 12px;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s;
 }
 
+.btn-cancel svg,
+.btn-leave svg { width: 18px; height: 18px; }
+
 .btn-cancel {
-  background: white;
-  color: #4a5568;
-  border: 2px solid #e2e8f0;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .btn-cancel:hover {
-  border-color: #cbd5e0;
-  background: #f7fafc;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.btn-cancel svg {
-  width: 18px;
-  height: 18px;
 }
 
 .btn-leave {
-  background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+  background: linear-gradient(135deg, #ef4444, #dc2626);
   color: white;
-  box-shadow: 0 4px 15px rgba(245, 101, 101, 0.4);
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
 }
 
 .btn-leave:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(245, 101, 101, 0.6);
+  box-shadow: 0 8px 25px rgba(239, 68, 68, 0.5);
 }
 
 .btn-leave:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  transform: none;
 }
 
-.btn-leave svg {
-  width: 18px;
-  height: 18px;
+.loading-spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
 }
+
+@keyframes spin { to { transform: rotate(360deg); } }
 
 @media (max-width: 640px) {
-  .leave-card {
-    padding: 32px 24px;
-  }
-
-  .leave-title {
-    font-size: 28px;
-  }
-
-  .warning-icon {
-    width: 70px;
-    height: 70px;
-  }
-
-  .warning-icon svg {
-    width: 40px;
-    height: 40px;
-  }
-
-  .button-group {
-    flex-direction: column;
-  }
+  .leave-card { padding: 28px 20px; }
+  .leave-title { font-size: 24px; }
+  .warning-icon { width: 64px; height: 64px; }
+  .warning-icon svg { width: 32px; height: 32px; }
+  .button-group { flex-direction: column; }
+  .orb-1 { width: 300px; height: 300px; }
+  .orb-2 { width: 250px; height: 250px; }
+  .orb-3 { width: 180px; height: 180px; }
 }
 </style>
