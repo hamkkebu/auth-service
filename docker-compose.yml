@@ -43,9 +43,10 @@ services:
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
       JWT_SECRET: ${JWT_SECRET}
-      REDIS_HOST: host.docker.internal
+      # Boilerplate의 Redis 컨테이너 사용 (hamkkebu-network에서 연결)
+      REDIS_HOST: hamkkebu-boilerplate-redis
       REDIS_PORT: 6379
-      REDIS_PASSWORD: ""
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-devRedisPassword123!}
       LOGIN_MAX_ATTEMPTS: ${LOGIN_MAX_ATTEMPTS:-20}
       LOGIN_BLOCK_DURATION: ${LOGIN_BLOCK_DURATION:-3}
     restart: always
@@ -71,7 +72,8 @@ services:
 
 networks:
   hamkkebu-auth-network:
-    driver: bridge
+    name: hamkkebu-network
+    external: true
 
 volumes:
   mysql-data:

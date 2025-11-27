@@ -126,17 +126,12 @@ public class AuthService {
         String accessToken = jwtTokenProvider.createAccessToken(user.getUsername(), role);
         String refreshToken = jwtTokenProvider.createRefreshToken(user.getUsername(), role);
 
-        // RefreshToken을 Redis Whitelist에 저장 (Redis 연결 실패 시 무시)
-        try {
-            refreshTokenWhitelistService.addToWhitelist(
-                user.getUsername(),
-                refreshToken,
-                refreshTokenValidity
-            );
-        } catch (Exception e) {
-            log.warn("RefreshToken Whitelist 저장 실패 (Redis 연결 불가): userId={}, error={}",
-                user.getUsername(), e.getMessage());
-        }
+        // RefreshToken을 Redis Whitelist에 저장 (Redis 연결 필수)
+        refreshTokenWhitelistService.addToWhitelist(
+            user.getUsername(),
+            refreshToken,
+            refreshTokenValidity
+        );
 
         // 토큰 만료 시간 (밀리초 -> 초)
         Long expiresIn = (jwtTokenProvider.getExpirationDate(accessToken).getTime() - System.currentTimeMillis()) / 1000;
