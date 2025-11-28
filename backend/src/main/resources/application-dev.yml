@@ -105,15 +105,20 @@ logging:
 # CORS 개발 환경 설정
 cors:
   allowed-origins:
-    # auth-service가 8081 포트를 사용하므로 추가
+    # Frontend 포트 (boilerplate: 3000, auth: 3001, ledger: 3002)
     - "http://localhost:3000"
     - "http://localhost:3001"
+    - "http://localhost:3002"
+    # Backend 포트 (boilerplate: 8080, auth: 8081, ledger: 8082)
     - "http://localhost:8080"
     - "http://localhost:8081"
+    - "http://localhost:8082"
     - "http://127.0.0.1:3000"
     - "http://127.0.0.1:3001"
+    - "http://127.0.0.1:3002"
     - "http://127.0.0.1:8080"
     - "http://127.0.0.1:8081"
+    - "http://127.0.0.1:8082"
 
 # SpringDoc OpenAPI (Swagger) 설정
 springdoc:

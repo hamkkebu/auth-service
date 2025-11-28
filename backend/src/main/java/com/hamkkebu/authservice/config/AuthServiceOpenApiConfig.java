@@ -4,6 +4,7 @@ import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
@@ -13,7 +14,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * Auth Service Swagger/OpenAPI 설정
@@ -70,6 +70,9 @@ public class AuthServiceOpenApiConfig {
                     .name("Hamkkebu Team")
                     .email("auth@hamkkebu.com")
                 )
+                .license(new License()
+                    .name("MIT License")
+                    .url("https://opensource.org/licenses/MIT"))
             )
             .servers(Arrays.asList(
                 new Server()
