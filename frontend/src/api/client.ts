@@ -231,8 +231,14 @@ apiClient.interceptors.response.use(
           }
         }
 
+        // 사용자를 찾을 수 없는 에러(USER-101)는 컴포넌트에서 처리하므로 인터셉터에서 alert 띄우지 않음
+        const isUserNotFoundError = data.error.code === 'USER-101' ||
+          (data.error.message && data.error.message.includes('사용자를 찾을 수 없습니다'));
+
         console.error(`[API Error ${status}]`, errorMessage);
-        alert(errorMessage);
+        if (!isUserNotFoundError) {
+          alert(errorMessage);
+        }
       } else if (status !== 401 && !isLoginEndpoint) {
         // 일반 HTTP 에러 (401은 이미 처리했으므로 제외)
         handleHttpError(status);

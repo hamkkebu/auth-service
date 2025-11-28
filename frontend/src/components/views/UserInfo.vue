@@ -106,6 +106,24 @@
         <p>새로운 회원을 등록해주세요.</p>
       </div>
 
+      <div class="service-link">
+        <a :href="ledgerServiceUrl" class="btn-ledger">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+            <line x1="12" y1="6" x2="12" y2="12"></line>
+            <line x1="9" y1="9" x2="15" y2="9"></line>
+          </svg>
+          <div class="btn-ledger-content">
+            <span class="btn-ledger-title">가계부 서비스</span>
+            <span class="btn-ledger-subtitle">수입/지출을 관리해보세요</span>
+          </div>
+          <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </a>
+      </div>
+
       <div class="navigation-buttons">
         <button @click="goToLogout" class="btn-secondary">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -146,6 +164,9 @@ export default defineComponent({
     const { loading, execute } = useApi<Sample>();
     const result = ref<Sample[]>([]);
 
+    // Ledger Service URL (환경변수 또는 기본값 사용)
+    const ledgerServiceUrl = process.env.VUE_APP_LEDGER_SERVICE_URL || 'http://localhost:3002/dashboard';
+
     const getUserInfo = async () => {
       if (!currentUser.value?.username) {
         alert('로그인 정보를 찾을 수 없습니다. 다시 로그인해주세요.');
@@ -153,12 +174,26 @@ export default defineComponent({
         return;
       }
 
-      const data = await execute(() =>
-        apiClient.get(API_ENDPOINTS.USER_BY_USERNAME(currentUser.value!.username))
-      );
+      try {
+        const data = await execute(() =>
+          apiClient.get(API_ENDPOINTS.USER_BY_USERNAME(currentUser.value!.username))
+        );
 
-      if (data) {
-        result.value = [data];
+        if (data) {
+          result.value = [data];
+        }
+      } catch (error: any) {
+        // 사용자를 찾을 수 없는 경우 (USER-101 또는 404 에러)
+        const errorCode = error?.response?.data?.error?.code;
+        const errorMessage = error?.response?.data?.error?.message || '';
+
+        if (errorCode === 'USER-101' || errorMessage.includes('사용자를 찾을 수 없습니다')) {
+          alert('사용자를 찾을 수 없습니다. 로그인 화면으로 되돌아갑니다.');
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('refreshToken');
+          localStorage.removeItem('currentUser');
+          router.push(ROUTES.LOGIN);
+        }
       }
     };
 
@@ -194,6 +229,7 @@ export default defineComponent({
       downloadExcel,
       goToLogout,
       goToLeave,
+      ledgerServiceUrl,
     };
   },
 });
@@ -447,6 +483,69 @@ export default defineComponent({
 }
 
 .empty-state p { font-size: 14px; margin: 0; }
+
+.service-link {
+  margin-top: 24px;
+  margin-bottom: 16px;
+}
+
+.btn-ledger {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.15));
+  border: 1px solid rgba(102, 126, 234, 0.3);
+  border-radius: 14px;
+  text-decoration: none;
+  transition: all 0.3s;
+}
+
+.btn-ledger:hover {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.25), rgba(118, 75, 162, 0.25));
+  border-color: rgba(102, 126, 234, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.25);
+}
+
+.btn-ledger > svg:first-child {
+  width: 32px;
+  height: 32px;
+  color: #667eea;
+  flex-shrink: 0;
+}
+
+.btn-ledger-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+}
+
+.btn-ledger-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.btn-ledger-subtitle {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.arrow-icon {
+  width: 20px;
+  height: 20px;
+  color: rgba(255, 255, 255, 0.4);
+  transition: transform 0.3s, color 0.3s;
+}
+
+.btn-ledger:hover .arrow-icon {
+  color: #667eea;
+  transform: translateX(4px);
+}
 
 .navigation-buttons {
   display: flex;

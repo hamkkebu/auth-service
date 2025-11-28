@@ -19,7 +19,7 @@ services:
       - ./backend/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
       - ./backend/src/main/resources/data.sql:/docker-entrypoint-initdb.d/2-data.sql
     networks:
-      - hamkkebu-auth-network
+      - auth-internal
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-root}"]
       interval: 10s
@@ -39,14 +39,16 @@ services:
     environment:
       # 개발 프로필 활성화 (포트 설정 적용)
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      # 내부 네트워크의 DB에 연결
       SPRING_DATASOURCE_URL: jdbc:mysql://database:3306/${DB_NAME:-hamkkebu_auth}?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
       JWT_SECRET: ${JWT_SECRET}
-      # Boilerplate의 Redis 컨테이너 사용 (hamkkebu-network에서 연결)
+      # 공유 인프라 네트워크의 Redis/Kafka에 연결 (컨테이너 이름 사용)
       REDIS_HOST: hamkkebu-boilerplate-redis
       REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD:-devRedisPassword123!}
+      KAFKA_BOOTSTRAP_SERVERS: hamkkebu-boilerplate-kafka:29092
       LOGIN_MAX_ATTEMPTS: ${LOGIN_MAX_ATTEMPTS:-20}
       LOGIN_BLOCK_DURATION: ${LOGIN_BLOCK_DURATION:-3}
     restart: always
@@ -54,7 +56,8 @@ services:
       database:
         condition: service_healthy
     networks:
-      - hamkkebu-auth-network
+      - auth-internal
+      - hamkkebu-infra
 
   frontend:
     build:
@@ -68,11 +71,15 @@ services:
     depends_on:
       - backend
     networks:
-      - hamkkebu-auth-network
+      - auth-internal
 
 networks:
-  hamkkebu-auth-network:
-    name: hamkkebu-network
+  # 내부 전용 네트워크 (DB 격리)
+  auth-internal:
+    driver: bridge
+
+  # 공유 인프라 네트워크 (외부에서 생성됨)
+  hamkkebu-infra:
     external: true
 
 volumes:
