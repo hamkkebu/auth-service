@@ -55,20 +55,26 @@ public class KeycloakUserSyncService {
         Optional<User> existingUser = userRepository.findByKeycloakUserIdAndIsDeletedFalse(keycloakUserId);
 
         if (existingUser.isPresent()) {
-            // 기존 사용자 - 로그인 시간 업데이트
+            // 기존 Keycloak 사용자 - 프로필 동기화 및 로그인 시간 업데이트
             User user = existingUser.get();
+            boolean updated = syncUserProfile(user, jwt);
             user.updateLastLoginAt();
-            log.debug("기존 사용자 로그인: userId={}, username={}", user.getUserId(), user.getUsername());
+
+            if (updated) {
+                log.info("Keycloak 사용자 프로필 동기화: userId={}, username={}", user.getUserId(), user.getUsername());
+            } else {
+                log.debug("기존 사용자 로그인: userId={}, username={}", user.getUserId(), user.getUsername());
+            }
             return userRepository.save(user);
         }
 
         // 2. username으로 기존 사용자 조회 (기존 회원이 Keycloak으로 처음 로그인하는 경우)
         Optional<User> userByUsername = userRepository.findByUsernameAndIsDeletedFalse(username);
         if (userByUsername.isPresent()) {
-            // Keycloak ID 연결
+            // Keycloak ID 연결 및 프로필 동기화
             User user = userByUsername.get();
-            // Reflection으로 keycloakUserId 설정 (setter가 없으므로)
-            setKeycloakUserId(user, keycloakUserId);
+            setField(user, "keycloakUserId", keycloakUserId);
+            syncUserProfile(user, jwt);
             user.updateLastLoginAt();
             log.info("기존 사용자에 Keycloak 연결: userId={}, username={}, keycloakUserId={}",
                     user.getUserId(), user.getUsername(), keycloakUserId);
@@ -100,6 +106,73 @@ public class KeycloakUserSyncService {
     }
 
     /**
+     * 기존 사용자 프로필을 Keycloak 정보로 동기화
+     *
+     * @param user 기존 사용자
+     * @param jwt Keycloak JWT
+     * @return 변경 여부
+     */
+    private boolean syncUserProfile(User user, Jwt jwt) {
+        boolean updated = false;
+
+        String email = jwt.getClaimAsString("email");
+        String firstName = jwt.getClaimAsString("given_name");
+        String lastName = jwt.getClaimAsString("family_name");
+        Role role = extractRole(jwt);
+
+        // 이메일 변경 확인 및 업데이트
+        if (email != null && !email.equals(user.getEmail())) {
+            setField(user, "email", email);
+            updated = true;
+            log.debug("이메일 업데이트: {} -> {}", user.getEmail(), email);
+        }
+
+        // 이름 변경 확인 및 업데이트
+        if (!equalsNullSafe(firstName, user.getFirstName())) {
+            setField(user, "firstName", firstName);
+            updated = true;
+            log.debug("firstName 업데이트: {} -> {}", user.getFirstName(), firstName);
+        }
+
+        if (!equalsNullSafe(lastName, user.getLastName())) {
+            setField(user, "lastName", lastName);
+            updated = true;
+            log.debug("lastName 업데이트: {} -> {}", user.getLastName(), lastName);
+        }
+
+        // 역할 변경 확인 및 업데이트
+        if (role != user.getRole()) {
+            setField(user, "role", role);
+            updated = true;
+            log.debug("role 업데이트: {} -> {}", user.getRole(), role);
+        }
+
+        return updated;
+    }
+
+    /**
+     * null-safe equals 비교
+     */
+    private boolean equalsNullSafe(String a, String b) {
+        if (a == null && b == null) return true;
+        if (a == null || b == null) return false;
+        return a.equals(b);
+    }
+
+    /**
+     * Reflection으로 필드 값 설정
+     */
+    private void setField(User user, String fieldName, Object value) {
+        try {
+            java.lang.reflect.Field field = User.class.getDeclaredField(fieldName);
+            field.setAccessible(true);
+            field.set(user, value);
+        } catch (Exception e) {
+            log.error("Failed to set {} via reflection", fieldName, e);
+        }
+    }
+
+    /**
      * Keycloak JWT에서 역할 추출
      */
     @SuppressWarnings("unchecked")
@@ -117,18 +190,5 @@ public class KeycloakUserSyncService {
             }
         }
         return Role.USER;
-    }
-
-    /**
-     * Reflection으로 keycloakUserId 설정
-     */
-    private void setKeycloakUserId(User user, String keycloakUserId) {
-        try {
-            java.lang.reflect.Field field = User.class.getDeclaredField("keycloakUserId");
-            field.setAccessible(true);
-            field.set(user, keycloakUserId);
-        } catch (Exception e) {
-            log.error("Failed to set keycloakUserId via reflection", e);
-        }
     }
 }
