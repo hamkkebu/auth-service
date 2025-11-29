@@ -140,22 +140,43 @@ public class UserController {
     }
 
     /**
-     * 사용자 삭제 (회원 탈퇴) by username
+     * Keycloak 사용자 여부 확인
      *
      * @param username 사용자 아이디
-     * @param request 삭제 요청 (비밀번호 포함)
+     * @return Keycloak 사용자 여부
+     */
+    @Operation(
+        summary = "Keycloak 사용자 여부 확인",
+        description = "사용자가 Keycloak SSO 사용자인지 확인합니다."
+    )
+    @GetMapping("/username/{username}/keycloak")
+    public ApiResponse<Boolean> isKeycloakUser(@PathVariable String username) {
+        log.debug("Keycloak 사용자 확인: username={}", username);
+        boolean isKeycloak = userService.isKeycloakUser(username);
+        return ApiResponse.success(isKeycloak);
+    }
+
+    /**
+     * 사용자 삭제 (회원 탈퇴) by username
+     *
+     * <p>Keycloak 사용자는 비밀번호 없이 탈퇴 가능합니다.</p>
+     * <p>일반 사용자는 비밀번호 확인이 필요합니다.</p>
+     *
+     * @param username 사용자 아이디
+     * @param request 삭제 요청 (비밀번호 포함, Keycloak 사용자는 선택)
      * @return 성공 메시지
      */
     @Operation(
         summary = "회원 탈퇴",
-        description = "사용자 아이디로 회원을 탈퇴합니다. 비밀번호 확인이 필요합니다."
+        description = "사용자 아이디로 회원을 탈퇴합니다. Keycloak 사용자는 비밀번호 없이, 일반 사용자는 비밀번호 확인이 필요합니다."
     )
     @DeleteMapping("/username/{username}")
     public ApiResponse<Void> deleteUserByUsername(
             @PathVariable String username,
-            @Valid @RequestBody DeleteUserRequest request) {
+            @RequestBody(required = false) DeleteUserRequest request) {
         log.info("회원 탈퇴 요청: username={}", username);
-        userService.deleteUserByUsername(username, request.getPassword());
+        String password = request != null ? request.getPassword() : null;
+        userService.deleteUserByUsername(username, password);
         return ApiResponse.success(null, "회원 탈퇴가 완료되었습니다");
     }
 }

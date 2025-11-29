@@ -54,6 +54,9 @@ dependencies {
 	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
 
+	// Keycloak Admin Client (사용자 관리 API)
+	implementation 'org.keycloak:keycloak-admin-client:22.0.1'
+
 	// Kafka
 	implementation 'org.springframework.kafka:spring-kafka'
 

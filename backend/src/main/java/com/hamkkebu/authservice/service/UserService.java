@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 /**
  * User 서비스
@@ -34,6 +35,7 @@ public class UserService {
     private final PasswordValidator passwordValidator;
     private final PasswordEncoder passwordEncoder;
     private final EventPublisher eventPublisher;
+    private final KeycloakAdminService keycloakAdminService;
 
     @Value("${kafka.topics.user-events:user.events}")
     private String userEventsTopic;
@@ -148,8 +150,14 @@ public class UserService {
     /**
      * 사용자 삭제 (회원 탈퇴) by username
      *
+     * <p>Keycloak 사용자와 일반 사용자를 구분하여 처리합니다:</p>
+     * <ul>
+     *   <li>Keycloak 사용자: Keycloak에서 삭제 후 DB soft delete (비밀번호 검증 불필요)</li>
+     *   <li>일반 사용자: 비밀번호 확인 후 DB soft delete</li>
+     * </ul>
+     *
      * @param username 사용자 아이디
-     * @param password 비밀번호 (확인용)
+     * @param password 비밀번호 (일반 사용자만 필요, Keycloak 사용자는 null 가능)
      */
     @Transactional
     public void deleteUserByUsername(String username, String password) {
@@ -159,16 +167,49 @@ public class UserService {
         User user = userRepository.findByUsernameAndIsDeletedFalse(username)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        // 비밀번호 확인
-        if (!passwordEncoder.matches(password, user.getPasswordHash())) {
-            log.warn("비밀번호 불일치: username={}", username);
-            throw new BusinessException(ErrorCode.AUTHENTICATION_FAILED, "비밀번호가 일치하지 않습니다");
+        // Keycloak 사용자인지 확인
+        boolean isKeycloakUser = StringUtils.hasText(user.getKeycloakUserId());
+
+        if (isKeycloakUser) {
+            // Keycloak 사용자: Keycloak에서 삭제
+            log.info("Keycloak 사용자 탈퇴 처리: username={}, keycloakUserId={}", username, user.getKeycloakUserId());
+
+            try {
+                keycloakAdminService.deleteUser(user.getKeycloakUserId());
+                log.info("Keycloak에서 사용자 삭제 완료: keycloakUserId={}", user.getKeycloakUserId());
+            } catch (Exception e) {
+                log.error("Keycloak 사용자 삭제 실패: keycloakUserId={}, error={}", user.getKeycloakUserId(), e.getMessage());
+                throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "Keycloak 사용자 삭제에 실패했습니다");
+            }
+        } else {
+            // 일반 사용자: 비밀번호 확인 필요
+            if (!StringUtils.hasText(password)) {
+                throw new BusinessException(ErrorCode.VALIDATION_FAILED, "비밀번호를 입력해주세요");
+            }
+
+            if (!passwordEncoder.matches(password, user.getPasswordHash())) {
+                log.warn("비밀번호 불일치: username={}", username);
+                throw new BusinessException(ErrorCode.AUTHENTICATION_FAILED, "비밀번호가 일치하지 않습니다");
+            }
         }
 
-        // Soft Delete
+        // DB Soft Delete
         user.delete();
         userRepository.save(user);
-        log.info("사용자 탈퇴 완료: username={}", username);
+        log.info("사용자 탈퇴 완료: username={}, isKeycloakUser={}", username, isKeycloakUser);
+    }
+
+    /**
+     * 사용자가 Keycloak 사용자인지 확인
+     *
+     * @param username 사용자 아이디
+     * @return Keycloak 사용자 여부
+     */
+    @Transactional(readOnly = true)
+    public boolean isKeycloakUser(String username) {
+        return userRepository.findByUsernameAndIsDeletedFalse(username)
+                .map(user -> StringUtils.hasText(user.getKeycloakUserId()))
+                .orElse(false);
     }
 
     /**

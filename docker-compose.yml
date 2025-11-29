@@ -56,6 +56,13 @@ services:
       # Keycloak SSO 설정 (Docker 컨테이너에서 호스트 머신 접근)
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://host.docker.internal:8180/realms/hamkkebu
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://host.docker.internal:8180/realms/hamkkebu/protocol/openid-connect/certs
+      KEYCLOAK_AUTH_SERVER_URL: http://host.docker.internal:8180
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM:-hamkkebu}
+      # Keycloak Admin API (사용자 삭제용)
+      KEYCLOAK_ADMIN_REALM: ${KEYCLOAK_ADMIN_REALM:-master}
+      KEYCLOAK_ADMIN_CLIENT_ID: ${KEYCLOAK_ADMIN_CLIENT_ID:-admin-cli}
+      KEYCLOAK_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USERNAME:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
     restart: always
     depends_on:
       database:
