@@ -1,18 +1,43 @@
 <template>
   <div id="app">
-    <NavBar />
-    <router-view />
+    <div v-if="isLoading" class="loading-overlay">
+      <div class="loading-spinner"></div>
+      <p>인증 정보를 확인하는 중...</p>
+    </div>
+    <template v-else>
+      <NavBar />
+      <router-view />
+    </template>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { defineComponent, ref, onMounted } from 'vue';
 import NavBar from '@/components/views/NavBar.vue';
+import { useAuth } from '@/composables/useAuth';
 
 export default defineComponent({
   name: 'App',
   components: {
     NavBar,
+  },
+  setup() {
+    const { initAuth } = useAuth();
+    const isLoading = ref(true);
+
+    onMounted(async () => {
+      try {
+        await initAuth();
+      } catch (error) {
+        console.error('Auth initialization failed:', error);
+      } finally {
+        isLoading.value = false;
+      }
+    });
+
+    return {
+      isLoading,
+    };
   },
 });
 </script>
@@ -204,5 +229,40 @@ h1, h2, h3, h4, h5, h6 {
 .glow {
   box-shadow: 0 0 20px rgba(102, 126, 234, 0.3),
               0 0 40px rgba(118, 75, 162, 0.2);
+}
+
+/* Loading Overlay */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--bg-primary);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--glass-border);
+  border-top: 4px solid var(--accent-purple);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-overlay p {
+  margin-top: 16px;
+  color: var(--text-secondary);
+  font-size: 14px;
 }
 </style>

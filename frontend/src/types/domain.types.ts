@@ -52,11 +52,14 @@ export type UserRole = 'USER' | 'ADMIN' | 'DEVELOPER';
  * 인증 관련 타입
  */
 export interface AuthUser {
+  id?: number;
   username: string;
   firstName: string;
   lastName: string;
   email?: string;
   role?: UserRole;
+  isActive?: boolean;
+  isVerified?: boolean;
 }
 
 export interface LoginRequest {
