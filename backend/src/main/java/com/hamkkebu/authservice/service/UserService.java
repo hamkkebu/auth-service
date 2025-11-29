@@ -4,6 +4,7 @@ import com.hamkkebu.authservice.data.dto.DuplicateCheckResponse;
 import com.hamkkebu.authservice.data.dto.UserRequest;
 import com.hamkkebu.authservice.data.dto.UserResponse;
 import com.hamkkebu.authservice.data.entity.User;
+import com.hamkkebu.authservice.data.event.UserDeletedEvent;
 import com.hamkkebu.authservice.data.event.UserRegisteredEvent;
 import com.hamkkebu.authservice.data.mapper.UserMapper;
 import com.hamkkebu.authservice.repository.UserRepository;
@@ -197,6 +198,9 @@ public class UserService {
         user.delete();
         userRepository.save(user);
         log.info("사용자 탈퇴 완료: username={}, isKeycloakUser={}", username, isKeycloakUser);
+
+        // 회원탈퇴 이벤트 발행 (Kafka 연결 실패 시 무시, 비동기 처리)
+        publishUserDeletedEventAsync(user.getUserId());
     }
 
     /**
@@ -223,6 +227,21 @@ public class UserService {
                 log.info("회원가입 이벤트 발행 완료: userId={}, eventId={}", userId, event.getEventId());
             } catch (Exception e) {
                 log.warn("회원가입 이벤트 발행 실패 (Kafka 연결 불가): userId={}, error={}", userId, e.getMessage());
+            }
+        }).start();
+    }
+
+    /**
+     * 회원탈퇴 이벤트 비동기 발행 (Kafka 연결 실패 시 무시)
+     */
+    private void publishUserDeletedEventAsync(Long userId) {
+        new Thread(() -> {
+            try {
+                UserDeletedEvent event = UserDeletedEvent.of(userId);
+                eventPublisher.publish(userEventsTopic, event);
+                log.info("회원탈퇴 이벤트 발행 완료: userId={}, eventId={}", userId, event.getEventId());
+            } catch (Exception e) {
+                log.warn("회원탈퇴 이벤트 발행 실패 (Kafka 연결 불가): userId={}, error={}", userId, e.getMessage());
             }
         }).start();
     }
