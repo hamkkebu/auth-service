@@ -63,11 +63,17 @@ kafka:
   topics:
     user-events: user.events
 
-# JWT 설정 (개발 환경)
-jwt:
-  secret: ThisIsADevelopmentSecretKeyPleaseChangeInProductionAtLeast64Characters
-  access-token-validity: 3600000    # 1시간 (밀리초)
-  refresh-token-validity: 604800000  # 7일 (밀리초)
+# Keycloak SSO 설정 (개발 환경)
+keycloak:
+  auth-server-url: http://localhost:8180
+  realm: hamkkebu
+  client-id: hamkkebu-backend
+  client-secret: hamkkebu-backend-secret
+
+# Spring Security OAuth2 Resource Server 설정 (Keycloak 연동)
+spring.security.oauth2.resourceserver.jwt:
+  issuer-uri: http://localhost:8180/realms/hamkkebu
+  jwk-set-uri: http://localhost:8180/realms/hamkkebu/protocol/openid-connect/certs
 
 # gRPC 서버 설정
 grpc:

@@ -146,7 +146,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted } from 'vue';
+import { defineComponent, ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import * as XLSX from 'xlsx';
 import apiClient from '@/api/client';
@@ -164,8 +164,16 @@ export default defineComponent({
     const { loading, execute } = useApi<Sample>();
     const result = ref<Sample[]>([]);
 
-    // Ledger Service URL (환경변수 또는 기본값 사용)
-    const ledgerServiceUrl = process.env.VUE_APP_LEDGER_SERVICE_URL || 'http://localhost:3002/dashboard';
+    // Ledger Service URL (토큰을 URL 파라미터로 전달)
+    const ledgerServiceUrl = computed(() => {
+      const baseUrl = process.env.VUE_APP_LEDGER_SERVICE_URL || 'http://localhost:3002/dashboard';
+      const token = localStorage.getItem('authToken');
+      const user = localStorage.getItem('currentUser');
+      if (token && user) {
+        return `${baseUrl}?token=${encodeURIComponent(token)}&user=${encodeURIComponent(user)}`;
+      }
+      return baseUrl;
+    });
 
     const getUserInfo = async () => {
       if (!currentUser.value?.username) {
