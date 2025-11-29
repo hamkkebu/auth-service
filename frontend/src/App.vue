@@ -5,14 +5,15 @@
       <p>인증 정보를 확인하는 중...</p>
     </div>
     <template v-else>
-      <NavBar />
+      <NavBar v-if="!isAuthPage" />
       <router-view />
     </template>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted } from 'vue';
+import { defineComponent, ref, onMounted, computed } from 'vue';
+import { useRoute } from 'vue-router';
 import NavBar from '@/components/views/NavBar.vue';
 import { useAuth } from '@/composables/useAuth';
 
@@ -22,8 +23,15 @@ export default defineComponent({
     NavBar,
   },
   setup() {
+    const route = useRoute();
     const { initAuth } = useAuth();
     const isLoading = ref(true);
+
+    // 인증 관련 페이지에서는 NavBar 숨김 (전체 화면 디자인)
+    const isAuthPage = computed(() => {
+      const authRoutes = ['/login', '/signup'];
+      return authRoutes.includes(route.path);
+    });
 
     onMounted(async () => {
       try {
@@ -37,6 +45,7 @@ export default defineComponent({
 
     return {
       isLoading,
+      isAuthPage,
     };
   },
 });
