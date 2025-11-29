@@ -42,14 +42,23 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from 'vue';
+import { defineComponent, ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { useAuth } from '@/composables/useAuth';
 
 export default defineComponent({
   name: 'LogIn',
   setup() {
-    const { login, register } = useAuth();
+    const router = useRouter();
+    const { login, register, isAuthenticated } = useAuth();
     const loading = ref(false);
+
+    // 이미 로그인된 경우 홈으로 리다이렉트
+    onMounted(() => {
+      if (isAuthenticated.value) {
+        router.push('/');
+      }
+    });
 
     const handleLogin = async () => {
       loading.value = true;
