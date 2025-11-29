@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue';
 import { setTokenProvider } from '@/api/client';
-import { useKeycloak } from './useKeycloak';
+import { useKeycloak } from '@common/composables/useKeycloak';
 import type { AuthUser } from '@/types/domain.types';
 
 /**

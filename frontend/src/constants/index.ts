@@ -1,5 +1,5 @@
 /**
- * 애플리케이션 상수 정의
+ * 애플리케이션 상수 정의 - Auth Service
  */
 
 /**
@@ -12,16 +12,6 @@ export const API_ENDPOINTS = {
   USER_BY_USERNAME: (username: string) => `/api/v1/users/username/${username}`,
   USER_CHECK_DUPLICATE: (username: string) => `/api/v1/users/check/${username}`,
   USER_CHECK_NICKNAME_DUPLICATE: (nickname: string) => `/api/v1/users/check/nickname/${nickname}`,
-  USERS_PAGE: '/api/v1/users/page',
-
-  // 인증 관련
-  AUTH: {
-    LOGIN: '/api/v1/auth/login',
-    LOGOUT: '/api/v1/auth/logout',
-    REFRESH: '/api/v1/auth/refresh',
-    VALIDATE: '/api/v1/auth/validate',
-    ME: '/api/v1/auth/me',
-  },
 
   // 관리자 관련
   ADMIN: {
@@ -68,17 +58,6 @@ export const SUCCESS_MESSAGES = {
   UPDATE_SUCCESS: '정보가 성공적으로 수정되었습니다.',
   DELETE_SUCCESS: '삭제가 완료되었습니다.',
   SAVE_SUCCESS: '저장되었습니다.',
-} as const;
-
-/**
- * 로컬 스토리지 키
- */
-export const STORAGE_KEYS = {
-  AUTH_TOKEN: 'authToken',
-  REFRESH_TOKEN: 'refreshToken',
-  CURRENT_USER: 'currentUser',
-  THEME: 'theme',
-  LANGUAGE: 'language',
 } as const;
 
 /**

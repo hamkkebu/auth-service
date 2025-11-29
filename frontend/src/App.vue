@@ -1,21 +1,14 @@
 <template>
   <div id="app">
-    <div v-if="isLoading" class="loading-overlay">
-      <div class="loading-spinner"></div>
-      <p>인증 정보를 확인하는 중...</p>
-    </div>
-    <template v-else>
-      <NavBar v-if="!isAuthPage" />
-      <router-view />
-    </template>
+    <NavBar v-if="!isAuthPage" />
+    <router-view />
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted, computed } from 'vue';
+import { defineComponent, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import NavBar from '@/components/views/NavBar.vue';
-import { useAuth } from '@/composables/useAuth';
 
 export default defineComponent({
   name: 'App',
@@ -24,8 +17,6 @@ export default defineComponent({
   },
   setup() {
     const route = useRoute();
-    const { initAuth } = useAuth();
-    const isLoading = ref(true);
 
     // 인증 관련 페이지에서는 NavBar 숨김 (전체 화면 디자인)
     const isAuthPage = computed(() => {
@@ -33,18 +24,8 @@ export default defineComponent({
       return authRoutes.includes(route.path);
     });
 
-    onMounted(async () => {
-      try {
-        await initAuth();
-      } catch (error) {
-        console.error('Auth initialization failed:', error);
-      } finally {
-        isLoading.value = false;
-      }
-    });
-
+    // 인증 초기화는 main.ts에서 앱 마운트 전에 완료됨
     return {
-      isLoading,
       isAuthPage,
     };
   },
