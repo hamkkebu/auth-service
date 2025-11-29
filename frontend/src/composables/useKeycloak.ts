@@ -99,14 +99,14 @@ export function useKeycloak() {
         console.log('User logged out');
         clearAuthState();
         // SSO 로그아웃 감지 시 로그인 페이지로 리다이렉트
-        window.location.href = window.location.origin;
+        window.location.href = window.location.origin + '/login';
       };
 
       // 세션 상태 변경 이벤트 (다른 앱에서 로그아웃 시)
       keycloakInstance.onAuthRefreshError = () => {
         console.log('Auth refresh error - session may have ended');
         clearAuthState();
-        window.location.href = window.location.origin;
+        window.location.href = window.location.origin + '/login';
       };
 
       return authenticated;
@@ -142,7 +142,7 @@ export function useKeycloak() {
     clearAuthState();
 
     await keycloakInstance.logout({
-      redirectUri: redirectUri || window.location.origin,
+      redirectUri: redirectUri || window.location.origin + '/login',
     });
   };
 
