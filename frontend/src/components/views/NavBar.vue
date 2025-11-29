@@ -110,7 +110,6 @@
 
 <script lang="ts">
 import { defineComponent, ref, computed } from 'vue';
-import { useRouter } from 'vue-router';
 import { useAuth } from '@/composables/useAuth';
 import { ROUTES } from '@/constants';
 import type { UserRole } from '@/types/domain.types';
@@ -118,7 +117,6 @@ import type { UserRole } from '@/types/domain.types';
 export default defineComponent({
   name: 'NavBar',
   setup() {
-    const router = useRouter();
     const { currentUser, isAuthenticated, logout } = useAuth();
     const menuActive = ref(false);
 
@@ -137,9 +135,10 @@ export default defineComponent({
 
     const handleLogout = async () => {
       if (confirm('로그아웃 하시겠습니까?')) {
-        await logout();
         closeMenu();
-        router.push(ROUTES.LOGIN);
+        // Keycloak logout이 /login으로 리다이렉트함
+        // router.push 사용하지 않음 (Keycloak 리다이렉트 전에 실행되어 충돌 발생)
+        await logout();
       }
     };
 
