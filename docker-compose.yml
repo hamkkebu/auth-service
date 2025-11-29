@@ -73,8 +73,8 @@ services:
 
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: frontend/Dockerfile
     container_name: hamkkebu-auth-service-frontend
     ports:
       # Auth Service Frontend는 3001 포트 사용 (Boilerplate는 3000)
