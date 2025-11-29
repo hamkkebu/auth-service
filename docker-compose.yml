@@ -36,6 +36,8 @@ services:
       - "${BACKEND_PORT:-8081}:8081"
       # gRPC 포트 (auth-service는 9091, boilerplate는 9090)
       - "${GRPC_PORT:-9091}:9091"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       # 개발 프로필 활성화 (포트 설정 적용)
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
@@ -51,6 +53,9 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: hamkkebu-boilerplate-kafka:29092
       LOGIN_MAX_ATTEMPTS: ${LOGIN_MAX_ATTEMPTS:-20}
       LOGIN_BLOCK_DURATION: ${LOGIN_BLOCK_DURATION:-3}
+      # Keycloak SSO 설정 (Docker 컨테이너에서 호스트 머신 접근)
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://host.docker.internal:8180/realms/hamkkebu
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://host.docker.internal:8180/realms/hamkkebu/protocol/openid-connect/certs
     restart: always
     depends_on:
       database:

@@ -8,6 +8,11 @@ import type { ApiResponse } from '@/types/api.types';
 let tokenProvider: (() => Promise<string | null>) | null = null;
 
 /**
+ * 세션 만료 처리 중 플래그 (무한 리다이렉트 방지)
+ */
+let isHandlingExpiredSession = false;
+
+/**
  * 토큰 제공자 설정 함수
  */
 export function setTokenProvider(provider: () => Promise<string | null>): void {
@@ -69,7 +74,9 @@ apiClient.interceptors.response.use(
     // 401 에러 처리: Keycloak 세션 만료
     if (error.response?.status === 401) {
       console.log('[Keycloak] Session expired, redirecting to login...');
-      handleTokenExpired();
+      if (!isHandlingExpiredSession) {
+        handleTokenExpired();
+      }
       return Promise.reject(error);
     }
 
@@ -117,8 +124,12 @@ apiClient.interceptors.response.use(
  * 토큰 만료 처리 (Keycloak 로그인 페이지로 리다이렉트)
  */
 function handleTokenExpired(): void {
+  if (isHandlingExpiredSession) {
+    return;
+  }
+  isHandlingExpiredSession = true;
   alert('세션이 만료되었습니다. 다시 로그인해주세요.');
-  window.location.href = '/';
+  window.location.href = '/login';
 }
 
 /**
