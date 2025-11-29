@@ -138,4 +138,21 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @return 사용자 수
      */
     long countByRoleAndIsDeletedFalse(Role role);
+
+    /**
+     * Keycloak 사용자 ID로 삭제되지 않은 사용자 조회
+     * (JIT 프로비저닝용)
+     *
+     * @param keycloakUserId Keycloak 사용자 ID (sub claim)
+     * @return User Optional
+     */
+    Optional<User> findByKeycloakUserIdAndIsDeletedFalse(String keycloakUserId);
+
+    /**
+     * Keycloak 사용자 ID 존재 여부 확인
+     *
+     * @param keycloakUserId Keycloak 사용자 ID
+     * @return 존재하면 true
+     */
+    boolean existsByKeycloakUserId(String keycloakUserId);
 }

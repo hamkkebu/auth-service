@@ -12,7 +12,8 @@ CREATE TABLE users (
     user_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) NOT NULL UNIQUE,
     email VARCHAR(100) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NOT NULL,
+    keycloak_user_id VARCHAR(36) UNIQUE,          -- Keycloak SSO 연동용 (sub claim)
+    password_hash VARCHAR(255),                    -- Keycloak 사용자는 NULL 가능
     first_name VARCHAR(50),
     last_name VARCHAR(50),
     nickname VARCHAR(50),
@@ -36,6 +37,7 @@ CREATE TABLE users (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_username (username),
     INDEX idx_email (email),
+    INDEX idx_keycloak_user_id (keycloak_user_id),
     INDEX idx_is_active (is_active),
     INDEX idx_is_deleted (is_deleted)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

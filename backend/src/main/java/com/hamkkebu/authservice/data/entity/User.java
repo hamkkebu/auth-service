@@ -37,8 +37,15 @@ public class User extends BaseEntity {
     @Column(name = "email", nullable = false, unique = true, length = 100)
     private String email;
 
+    /**
+     * Keycloak 사용자 ID (sub claim)
+     * Keycloak SSO 연동을 위한 외부 식별자
+     */
+    @Column(name = "keycloak_user_id", unique = true, length = 36)
+    private String keycloakUserId;
+
     @JsonIgnore
-    @Column(name = "password_hash", nullable = false, length = 255)
+    @Column(name = "password_hash", length = 255)
     private String passwordHash;
 
     @Column(name = "first_name", length = 50)
