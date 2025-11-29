@@ -22,61 +22,9 @@
         <p class="login-subtitle">계정에 로그인하여 계속하세요</p>
       </div>
 
-      <form class="login-form" @submit.prevent="logInSubmit">
-        <div class="input-group">
-          <label for="userId" class="input-label">아이디</label>
-          <div class="input-wrapper">
-            <div class="input-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-              </svg>
-            </div>
-            <input
-              id="userId"
-              type="text"
-              class="input-field"
-              placeholder="아이디를 입력하세요"
-              v-model="user_id"
-              required
-            />
-            <div class="input-glow"></div>
-          </div>
-        </div>
-
-        <div class="input-group">
-          <label for="userPassword" class="input-label">비밀번호</label>
-          <div class="input-wrapper">
-            <div class="input-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-              </svg>
-            </div>
-            <input
-              id="userPassword"
-              :type="showPassword ? 'text' : 'password'"
-              class="input-field"
-              placeholder="비밀번호를 입력하세요"
-              v-model="user_pw"
-              required
-            />
-            <button type="button" class="password-toggle" @click="showPassword = !showPassword">
-              <svg v-if="!showPassword" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                <circle cx="12" cy="12" r="3"></circle>
-              </svg>
-              <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                <line x1="1" y1="1" x2="23" y2="23"></line>
-              </svg>
-            </button>
-            <div class="input-glow"></div>
-          </div>
-        </div>
-
-        <button type="submit" class="btn-login" :disabled="loading">
-          <span v-if="!loading">로그인</span>
+      <div class="login-actions">
+        <button type="button" class="btn-login" @click="handleLogin" :disabled="loading">
+          <span v-if="!loading">Keycloak으로 로그인</span>
           <span v-else class="loading-spinner"></span>
         </button>
 
@@ -86,96 +34,41 @@
 
         <div class="signup-link">
           계정이 없으신가요?
-          <a href="#" @click.prevent="goToSignup">회원가입</a>
+          <a href="#" @click.prevent="handleRegister">회원가입</a>
         </div>
-      </form>
+      </div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent, ref } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
 import { useAuth } from '@/composables/useAuth';
-import apiClient from '@/api/client';
-import { useApi } from '@/composables/useApi';
-import { API_ENDPOINTS, ROUTES } from '@/constants';
-import type { LoginResponse } from '@/types/domain.types';
 
 export default defineComponent({
   name: 'LogIn',
   setup() {
-    const router = useRouter();
-    const route = useRoute();
-    const { login } = useAuth();
-    const { loading, execute } = useApi<LoginResponse>();
+    const { login, register } = useAuth();
+    const loading = ref(false);
 
-    const prefilledUsername = (route.query.username as string) || '';
-    const user_id = ref(prefilledUsername);
-    const user_pw = ref('');
-    const showPassword = ref(false);
-
-    const logInSubmit = async () => {
-      if (!user_id.value) {
-        alert('아이디를 입력해주세요.');
-        return;
-      }
-
-      if (!user_pw.value) {
-        alert('비밀번호를 입력해주세요.');
-        return;
-      }
-
+    const handleLogin = async () => {
+      loading.value = true;
       try {
-        const response = await apiClient.post(API_ENDPOINTS.AUTH.LOGIN, {
-          username: user_id.value,
-          password: user_pw.value,
-        });
-
-        const data = response.data.data;
-
-        login(
-          {
-            username: data.username,
-            firstName: data.firstName,
-            lastName: data.lastName,
-            email: data.email ?? undefined,
-            role: data.role,
-          },
-          data.token.accessToken,
-          data.token.refreshToken
-        );
-
-        router.push(ROUTES.USER_INFO);
-      } catch (error: any) {
-        if (error.response?.data?.error?.code === 'USER-101') {
-          if (confirm('등록되지 않은 아이디입니다. 회원가입을 진행하시겠습니까?')) {
-            router.push({
-              path: ROUTES.SIGNUP,
-              query: {
-                username: user_id.value,
-                password: user_pw.value,
-              },
-            });
-          }
-        } else {
-          const errorMessage = error.response?.data?.error?.message || '로그인에 실패했습니다.';
-          alert(errorMessage);
-        }
+        await login();
+      } catch (error) {
+        console.error('Login failed:', error);
+        loading.value = false;
       }
     };
 
-    const goToSignup = () => {
-      router.push(ROUTES.SIGNUP);
+    const handleRegister = async () => {
+      await register();
     };
 
     return {
-      user_id,
-      user_pw,
-      showPassword,
       loading,
-      logInSubmit,
-      goToSignup,
+      handleLogin,
+      handleRegister,
     };
   },
 });
@@ -330,112 +223,10 @@ export default defineComponent({
   font-weight: 400;
 }
 
-.login-form {
+.login-actions {
   display: flex;
   flex-direction: column;
   gap: 20px;
-}
-
-.input-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.input-label {
-  font-size: 13px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.7);
-  letter-spacing: 0.02em;
-}
-
-.input-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.input-icon {
-  position: absolute;
-  left: 16px;
-  width: 20px;
-  height: 20px;
-  color: rgba(255, 255, 255, 0.3);
-  pointer-events: none;
-  transition: color 0.3s;
-  z-index: 2;
-}
-
-.input-icon svg {
-  width: 20px;
-  height: 20px;
-}
-
-.input-field {
-  width: 100%;
-  padding: 14px 48px 14px 48px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  font-size: 15px;
-  color: rgba(255, 255, 255, 0.95);
-  transition: all 0.3s ease;
-  outline: none;
-}
-
-.input-field::placeholder {
-  color: rgba(255, 255, 255, 0.3);
-}
-
-.input-field:hover {
-  border-color: rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.input-field:focus {
-  border-color: rgba(102, 126, 234, 0.5);
-  background: rgba(255, 255, 255, 0.05);
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
-.input-wrapper:focus-within .input-icon {
-  color: #667eea;
-}
-
-.input-glow {
-  position: absolute;
-  inset: -1px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  opacity: 0;
-  transition: opacity 0.3s;
-  z-index: -1;
-  filter: blur(8px);
-}
-
-.input-wrapper:focus-within .input-glow {
-  opacity: 0.15;
-}
-
-.password-toggle {
-  position: absolute;
-  right: 16px;
-  background: none;
-  border: none;
-  padding: 4px;
-  cursor: pointer;
-  color: rgba(255, 255, 255, 0.3);
-  transition: color 0.2s;
-  z-index: 2;
-}
-
-.password-toggle:hover {
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.password-toggle svg {
-  width: 20px;
-  height: 20px;
 }
 
 .btn-login {
@@ -451,7 +242,6 @@ export default defineComponent({
   transition: all 0.3s;
   position: relative;
   overflow: hidden;
-  margin-top: 8px;
 }
 
 .btn-login::before {
