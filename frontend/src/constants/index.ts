@@ -29,6 +29,7 @@ export const API_ENDPOINTS = {
 export const ROUTES = {
   HOME: '/',
   LOGIN: '/login',
+  LOGOUT: '/logout',
   SIGNUP: '/signup',
   USER_INFO: '/userinfo',
   LEAVE_USER: '/leaveuser',

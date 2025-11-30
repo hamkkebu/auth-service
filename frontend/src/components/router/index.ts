@@ -4,6 +4,7 @@ import SignUp from '@/components/views/SignUp.vue';
 import UserInfo from '@/components/views/UserInfo.vue';
 import LeaveUser from '@/components/views/LeaveUser.vue';
 import AdminDashboard from '@/components/views/AdminDashboard.vue';
+import LogOut from '@/components/views/LogOut.vue';
 import { ROUTES } from '@/constants';
 import type { UserRole } from '@/types/domain.types';
 import { useAuth } from '@/composables/useAuth';
@@ -33,6 +34,12 @@ const routes: RouteRecordRaw[] = [
     path: ROUTES.LOGIN,
     name: 'LogIn',
     component: LogIn,
+    meta: { requiresAuth: false },
+  },
+  {
+    path: ROUTES.LOGOUT,
+    name: 'LogOut',
+    component: LogOut,
     meta: { requiresAuth: false },
   },
   {
