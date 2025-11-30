@@ -51,6 +51,34 @@ export function useAuth() {
   };
 
   /**
+   * Direct 로그인 (커스텀 로그인 폼용)
+   * 사용자명/비밀번호를 직접 Keycloak에 전송
+   */
+  const directLogin = async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    // API 클라이언트에 토큰 제공자 설정
+    setTokenProvider(() => keycloak.getToken());
+
+    const result = await keycloak.directLogin(username, password);
+
+    if (result.success && keycloak.currentUser.value) {
+      // Keycloak 사용자 정보를 AuthUser 형식으로 변환
+      currentUser.value = {
+        id: parseInt(keycloak.currentUser.value.id) || 0,
+        username: keycloak.currentUser.value.username,
+        email: keycloak.currentUser.value.email,
+        firstName: keycloak.currentUser.value.firstName,
+        lastName: keycloak.currentUser.value.lastName,
+        role: keycloak.currentUser.value.roles.includes('ADMIN') ? 'ADMIN' :
+              keycloak.currentUser.value.roles.includes('DEVELOPER') ? 'DEVELOPER' : 'USER',
+        isActive: true,
+        isVerified: true,
+      };
+    }
+
+    return result;
+  };
+
+  /**
    * 로그아웃 (Keycloak SSO 로그아웃)
    */
   const logout = async (redirectUri?: string): Promise<void> => {
@@ -101,6 +129,7 @@ export function useAuth() {
     // 메서드
     initAuth,
     login,
+    directLogin,
     logout,
     register,
     accountManagement,
