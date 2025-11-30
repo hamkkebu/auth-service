@@ -165,12 +165,17 @@ export default defineComponent({
     const result = ref<Sample[]>([]);
 
     // Ledger Service URL (토큰을 URL 파라미터로 전달)
+    // 보안: currentUser는 localStorage에 저장하지 않으므로 토큰만 전달 (사용자 정보는 토큰에서 파싱)
     const ledgerServiceUrl = computed(() => {
       const baseUrl = process.env.VUE_APP_LEDGER_SERVICE_URL || 'http://localhost:3002/dashboard';
       const token = localStorage.getItem('authToken');
-      const user = localStorage.getItem('currentUser');
-      if (token && user) {
-        return `${baseUrl}?token=${encodeURIComponent(token)}&user=${encodeURIComponent(user)}`;
+      const refreshTokenValue = localStorage.getItem('refreshToken');
+      if (token) {
+        let url = `${baseUrl}?token=${encodeURIComponent(token)}`;
+        if (refreshTokenValue) {
+          url += `&refreshToken=${encodeURIComponent(refreshTokenValue)}`;
+        }
+        return url;
       }
       return baseUrl;
     });
