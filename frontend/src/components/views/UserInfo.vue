@@ -146,7 +146,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted, computed } from 'vue';
+import { defineComponent, ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import * as XLSX from 'xlsx';
 import apiClient from '@/api/client';
@@ -160,33 +160,17 @@ export default defineComponent({
   name: 'UserInfo',
   setup() {
     const router = useRouter();
-    const { currentUser } = useAuth();
+    const { currentUser, logout, login } = useAuth();
     const { loading, execute } = useApi<Sample>();
     const result = ref<Sample[]>([]);
 
-    // Ledger Service URL (토큰을 URL Fragment로 전달)
-    // 보안: Fragment(#)는 서버로 전송되지 않으므로 쿼리스트링보다 안전
-    // - 서버 로그에 기록되지 않음
-    // - Referer 헤더에 포함되지 않음
-    const ledgerServiceUrl = computed(() => {
-      const baseUrl = process.env.VUE_APP_LEDGER_SERVICE_URL || 'http://localhost:3002/dashboard';
-      const token = localStorage.getItem('authToken');
-      const refreshTokenValue = localStorage.getItem('refreshToken');
-      if (token) {
-        const params = new URLSearchParams();
-        params.set('token', token);
-        if (refreshTokenValue) {
-          params.set('refreshToken', refreshTokenValue);
-        }
-        return `${baseUrl}#${params.toString()}`;
-      }
-      return baseUrl;
-    });
+    // Ledger Service URL (SSO: 토큰 전달 불필요, Keycloak 세션으로 자동 인증)
+    const ledgerServiceUrl = process.env.VUE_APP_LEDGER_SERVICE_URL || 'http://localhost:3002/dashboard';
 
     const getUserInfo = async () => {
       if (!currentUser.value?.username) {
         alert('로그인 정보를 찾을 수 없습니다. 다시 로그인해주세요.');
-        router.push(ROUTES.LOGIN);
+        login();
         return;
       }
 
@@ -205,10 +189,7 @@ export default defineComponent({
 
         if (errorCode === 'USER-101' || errorMessage.includes('사용자를 찾을 수 없습니다')) {
           alert('사용자를 찾을 수 없습니다. 로그인 화면으로 되돌아갑니다.');
-          localStorage.removeItem('authToken');
-          localStorage.removeItem('refreshToken');
-          localStorage.removeItem('currentUser');
-          router.push(ROUTES.LOGIN);
+          logout();
         }
       }
     };
@@ -227,7 +208,7 @@ export default defineComponent({
     };
 
     const goToLogout = () => {
-      router.push(ROUTES.LOGIN);
+      logout();
     };
 
     const goToLeave = () => {

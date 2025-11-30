@@ -16,11 +16,10 @@
 
       <div class="navbar-menu" :class="{ 'is-active': menuActive }">
         <div class="navbar-start">
-          <router-link
+          <button
             v-if="!isAuthenticated"
-            :to="ROUTES.SIGNUP"
             class="navbar-item"
-            @click="closeMenu"
+            @click="handleRegister"
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -29,7 +28,7 @@
               <line x1="23" y1="11" x2="17" y2="11"></line>
             </svg>
             회원가입
-          </router-link>
+          </button>
 
           <router-link
             v-if="isAuthenticated"
@@ -83,11 +82,10 @@
             </button>
           </div>
 
-          <router-link
+          <button
             v-else
-            :to="ROUTES.LOGIN"
             class="btn-login"
-            @click="closeMenu"
+            @click="handleLogin"
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
@@ -95,7 +93,7 @@
               <line x1="15" y1="12" x2="3" y2="12"></line>
             </svg>
             로그인
-          </router-link>
+          </button>
         </div>
       </div>
 
@@ -117,7 +115,7 @@ import type { UserRole } from '@/types/domain.types';
 export default defineComponent({
   name: 'NavBar',
   setup() {
-    const { currentUser, isAuthenticated, logout } = useAuth();
+    const { currentUser, isAuthenticated, logout, login, register } = useAuth();
     const menuActive = ref(false);
 
     const isAdmin = computed(() => {
@@ -136,10 +134,21 @@ export default defineComponent({
     const handleLogout = async () => {
       if (confirm('로그아웃 하시겠습니까?')) {
         closeMenu();
-        // Keycloak logout이 /login으로 리다이렉트함
-        // router.push 사용하지 않음 (Keycloak 리다이렉트 전에 실행되어 충돌 발생)
+        // Keycloak SSO 로그아웃 - 자동으로 리다이렉트됨
         await logout();
       }
+    };
+
+    const handleLogin = () => {
+      closeMenu();
+      // Keycloak SSO 로그인 페이지로 리다이렉트
+      login();
+    };
+
+    const handleRegister = () => {
+      closeMenu();
+      // Keycloak SSO 회원가입 페이지로 리다이렉트
+      register();
     };
 
     const getRoleLabel = (role?: UserRole): string => {
@@ -167,6 +176,8 @@ export default defineComponent({
       toggleMenu,
       closeMenu,
       handleLogout,
+      handleLogin,
+      handleRegister,
       getRoleLabel,
       getInitials,
     };
@@ -273,6 +284,10 @@ export default defineComponent({
   align-items: center;
   gap: 8px;
   position: relative;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
 }
 
 .navbar-item svg {
@@ -426,6 +441,9 @@ export default defineComponent({
   transition: all 0.3s;
   position: relative;
   overflow: hidden;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
 }
 
 .btn-login svg {

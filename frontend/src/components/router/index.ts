@@ -1,10 +1,7 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
-import LogIn from '@/components/views/LogIn.vue';
-import SignUp from '@/components/views/SignUp.vue';
 import UserInfo from '@/components/views/UserInfo.vue';
 import LeaveUser from '@/components/views/LeaveUser.vue';
 import AdminDashboard from '@/components/views/AdminDashboard.vue';
-import LogOut from '@/components/views/LogOut.vue';
 import { ROUTES } from '@/constants';
 import type { UserRole } from '@/types/domain.types';
 import { useAuth } from '@/composables/useAuth';
@@ -18,7 +15,6 @@ const routes: RouteRecordRaw[] = [
 
       if (isAuthenticated.value && currentUser.value) {
         const userRole = currentUser.value.role;
-        // 로그인되어 있으면 권한에 따라 리다이렉트
         if (userRole === 'ADMIN' || userRole === 'DEVELOPER') {
           return ROUTES.ADMIN_DASHBOARD;
         } else {
@@ -26,27 +22,9 @@ const routes: RouteRecordRaw[] = [
         }
       }
 
-      // 로그인 안되어 있으면 로그인 페이지로
-      return ROUTES.LOGIN;
+      // 로그인 안되어 있으면 사용자 정보 페이지로 (initAuth에서 로그인 리다이렉트)
+      return ROUTES.USER_INFO;
     },
-  },
-  {
-    path: ROUTES.LOGIN,
-    name: 'LogIn',
-    component: LogIn,
-    meta: { requiresAuth: false },
-  },
-  {
-    path: ROUTES.LOGOUT,
-    name: 'LogOut',
-    component: LogOut,
-    meta: { requiresAuth: false },
-  },
-  {
-    path: ROUTES.SIGNUP,
-    name: 'SignUp',
-    component: SignUp,
-    meta: { requiresAuth: false },
   },
   {
     path: ROUTES.USER_INFO,
@@ -69,6 +47,19 @@ const routes: RouteRecordRaw[] = [
       requiredRoles: ['ADMIN', 'DEVELOPER'] as UserRole[]
     },
   },
+  // 기존 로그인/회원가입 경로 -> 홈으로 리다이렉트 (Keycloak이 처리)
+  {
+    path: '/login',
+    redirect: '/',
+  },
+  {
+    path: '/signup',
+    redirect: '/',
+  },
+  {
+    path: '/logout',
+    redirect: '/',
+  },
 ];
 
 const router = createRouter({
@@ -77,10 +68,15 @@ const router = createRouter({
 });
 
 /**
- * 라우터 가드: Keycloak 기반 인증 및 권한 확인
+ * 라우터 가드: Keycloak SSO 기반 인증 및 권한 확인
  */
 router.beforeEach(async (to, from, next) => {
-  const { isAuthenticated, currentUser, hasRole } = useAuth();
+  const { isAuthenticated, currentUser, hasRole, login, initAuth, isInitialized } = useAuth();
+
+  // 초기화가 안 되어 있으면 초기화
+  if (!isInitialized.value) {
+    await initAuth();
+  }
 
   const requiresAuth = to.meta.requiresAuth;
   const requiredRoles = to.meta.requiredRoles as UserRole[] | undefined;
@@ -88,8 +84,8 @@ router.beforeEach(async (to, from, next) => {
   // 인증이 필요한 페이지인 경우
   if (requiresAuth) {
     if (!isAuthenticated.value) {
-      // 로그인되지 않았으면 로그인 페이지로
-      next(ROUTES.LOGIN);
+      // Keycloak 로그인 페이지로 리다이렉트
+      login(window.location.origin + to.fullPath);
       return;
     }
   }
@@ -99,23 +95,9 @@ router.beforeEach(async (to, from, next) => {
     const hasRequiredRole = requiredRoles.some(role => hasRole(role));
     if (!hasRequiredRole) {
       alert('접근 권한이 없습니다.');
-      // 일반 사용자는 사용자 정보 페이지로
       next(ROUTES.USER_INFO);
       return;
     }
-  }
-
-  // 로그인한 상태에서 로그인/회원가입 페이지 접근 시 권한에 따라 리다이렉트
-  if (isAuthenticated.value && (to.path === ROUTES.LOGIN || to.path === ROUTES.SIGNUP)) {
-    const userRole = currentUser.value?.role;
-    if (userRole === 'ADMIN' || userRole === 'DEVELOPER') {
-      // 관리자/개발자는 관리자 대시보드로
-      next(ROUTES.ADMIN_DASHBOARD);
-    } else {
-      // 일반 사용자는 사용자 정보 페이지로
-      next(ROUTES.USER_INFO);
-    }
-    return;
   }
 
   next();
