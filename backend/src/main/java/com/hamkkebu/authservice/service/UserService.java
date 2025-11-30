@@ -122,15 +122,30 @@ public class UserService {
     }
 
     /**
-     * 사용자 아이디 중복 확인 (탈퇴한 회원 포함)
+     * 사용자 아이디 중복 확인 (로컬 DB + Keycloak)
+     *
+     * <p>로컬 DB와 Keycloak 모두에서 아이디 중복을 확인합니다.</p>
      *
      * @param username 확인할 아이디
      * @return 중복 확인 결과
      */
     @Transactional(readOnly = true)
     public DuplicateCheckResponse checkUsernameDuplicate(String username) {
-        boolean exists = userRepository.existsByUsername(username);
-        log.debug("아이디 중복 확인 (탈퇴 회원 포함): username={}, exists={}", username, exists);
+        // 로컬 DB 확인 (탈퇴한 회원 포함)
+        boolean existsInDb = userRepository.existsByUsername(username);
+
+        // Keycloak 확인
+        boolean existsInKeycloak = false;
+        try {
+            existsInKeycloak = keycloakAdminService.usernameExists(username);
+        } catch (Exception e) {
+            log.warn("Keycloak 중복 확인 실패 (DB만 확인): username={}, error={}", username, e.getMessage());
+        }
+
+        boolean exists = existsInDb || existsInKeycloak;
+        log.debug("아이디 중복 확인: username={}, existsInDb={}, existsInKeycloak={}, exists={}",
+                username, existsInDb, existsInKeycloak, exists);
+
         return DuplicateCheckResponse.of(exists, username);
     }
 
