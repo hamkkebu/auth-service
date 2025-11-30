@@ -164,18 +164,21 @@ export default defineComponent({
     const { loading, execute } = useApi<Sample>();
     const result = ref<Sample[]>([]);
 
-    // Ledger Service URL (토큰을 URL 파라미터로 전달)
-    // 보안: currentUser는 localStorage에 저장하지 않으므로 토큰만 전달 (사용자 정보는 토큰에서 파싱)
+    // Ledger Service URL (토큰을 URL Fragment로 전달)
+    // 보안: Fragment(#)는 서버로 전송되지 않으므로 쿼리스트링보다 안전
+    // - 서버 로그에 기록되지 않음
+    // - Referer 헤더에 포함되지 않음
     const ledgerServiceUrl = computed(() => {
       const baseUrl = process.env.VUE_APP_LEDGER_SERVICE_URL || 'http://localhost:3002/dashboard';
       const token = localStorage.getItem('authToken');
       const refreshTokenValue = localStorage.getItem('refreshToken');
       if (token) {
-        let url = `${baseUrl}?token=${encodeURIComponent(token)}`;
+        const params = new URLSearchParams();
+        params.set('token', token);
         if (refreshTokenValue) {
-          url += `&refreshToken=${encodeURIComponent(refreshTokenValue)}`;
+          params.set('refreshToken', refreshTokenValue);
         }
-        return url;
+        return `${baseUrl}#${params.toString()}`;
       }
       return baseUrl;
     });
