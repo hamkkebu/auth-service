@@ -86,10 +86,13 @@ export function useAuth() {
   };
 
   /**
-   * 회원가입 (Keycloak 회원가입 페이지로 리다이렉트)
+   * 회원가입 (커스텀 회원가입 페이지로 리다이렉트)
+   *
+   * 참고: Keycloak UI 대신 커스텀 회원가입 페이지를 사용합니다.
+   * 직접 /signup 라우트로 이동하세요.
    */
-  const register = async (redirectUri?: string): Promise<void> => {
-    await keycloak.register(redirectUri);
+  const register = (): void => {
+    window.location.href = '/signup';
   };
 
   /**

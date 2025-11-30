@@ -88,7 +88,7 @@ export default defineComponent({
   name: 'LogIn',
   setup() {
     const router = useRouter();
-    const { directLogin, register, isAuthenticated } = useAuth();
+    const { directLogin, isAuthenticated } = useAuth();
     const loading = ref(false);
     const username = ref('');
     const password = ref('');
@@ -125,8 +125,8 @@ export default defineComponent({
       }
     };
 
-    const handleRegister = async () => {
-      await register();
+    const handleRegister = () => {
+      router.push('/signup');
     };
 
     return {
