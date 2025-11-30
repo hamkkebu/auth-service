@@ -53,19 +53,7 @@ public class UserService {
     public UserResponse registerUser(UserRequest request) {
         log.info("사용자 등록 시작: username={}", request.getUsername());
 
-        // 아이디 중복 확인 (탈퇴한 회원 포함)
-        if (userRepository.existsByUsername(request.getUsername())) {
-            log.warn("중복된 아이디 (탈퇴 회원 포함): {}", request.getUsername());
-            throw new BusinessException(ErrorCode.DUPLICATE_RESOURCE, "이미 사용된 아이디입니다 (탈퇴한 회원 포함)");
-        }
-
-        // 이메일 중복 확인 (탈퇴한 회원 포함)
-        if (userRepository.existsByEmail(request.getEmail())) {
-            log.warn("중복된 이메일 (탈퇴 회원 포함): {}", request.getEmail());
-            throw new BusinessException(ErrorCode.DUPLICATE_RESOURCE, "이미 사용된 이메일입니다 (탈퇴한 회원 포함)");
-        }
-
-        // Keycloak 중복 확인
+        // Keycloak 중복 확인 (Keycloak에서 unique 제약 관리)
         if (keycloakAdminService.usernameExists(request.getUsername())) {
             log.warn("Keycloak에 이미 존재하는 아이디: {}", request.getUsername());
             throw new BusinessException(ErrorCode.DUPLICATE_RESOURCE, "이미 사용된 아이디입니다");

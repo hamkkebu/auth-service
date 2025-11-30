@@ -10,8 +10,8 @@ DROP TABLE IF EXISTS tbl_outbox_event;
 -- Create users table
 CREATE TABLE users (
     user_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(50) NOT NULL UNIQUE,
-    email VARCHAR(100) NOT NULL UNIQUE,
+    username VARCHAR(50) NOT NULL,
+    email VARCHAR(100) NOT NULL,
     keycloak_user_id VARCHAR(36) UNIQUE,          -- Keycloak SSO 연동용 (sub claim)
     password_hash VARCHAR(255),                    -- Keycloak 사용자는 NULL 가능
     first_name VARCHAR(50),
