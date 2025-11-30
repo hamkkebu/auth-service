@@ -44,6 +44,8 @@ public class UserService {
     /**
      * 사용자 등록 (회원가입)
      *
+     * <p>Keycloak과 로컬 DB 모두에 사용자를 생성합니다.</p>
+     *
      * @param request 사용자 등록 요청
      * @return 등록된 사용자 정보
      */
@@ -63,13 +65,34 @@ public class UserService {
             throw new BusinessException(ErrorCode.DUPLICATE_RESOURCE, "이미 사용된 이메일입니다 (탈퇴한 회원 포함)");
         }
 
+        // Keycloak 중복 확인
+        if (keycloakAdminService.usernameExists(request.getUsername())) {
+            log.warn("Keycloak에 이미 존재하는 아이디: {}", request.getUsername());
+            throw new BusinessException(ErrorCode.DUPLICATE_RESOURCE, "이미 사용된 아이디입니다");
+        }
+
         // SECURITY: 비밀번호 강도 검증
         passwordValidator.validatePasswordFormat(request.getPassword());
 
-        // 비밀번호 암호화
+        // 1. Keycloak에 사용자 생성
+        String keycloakUserId;
+        try {
+            keycloakUserId = keycloakAdminService.createUser(
+                    request.getUsername(),
+                    request.getEmail(),
+                    request.getPassword(),
+                    request.getFirstName(),
+                    request.getLastName()
+            );
+        } catch (Exception e) {
+            log.error("Keycloak 사용자 생성 실패: username={}, error={}", request.getUsername(), e.getMessage());
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "회원가입 처리 중 오류가 발생했습니다");
+        }
+
+        // 2. 비밀번호 암호화 (로컬 DB 저장용)
         String encodedPassword = passwordEncoder.encode(request.getPassword());
 
-        // User 엔티티 생성
+        // 3. User 엔티티 생성 (Keycloak ID 포함)
         User user = User.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
@@ -83,12 +106,14 @@ public class UserService {
                 .streetAddress(request.getStreetAddress())
                 .postalCode(request.getPostalCode())
                 .isActive(true)
-                .isVerified(false)
+                .isVerified(true)  // Keycloak에서 이메일 검증됨으로 설정
                 .role(Role.USER)
+                .keycloakUserId(keycloakUserId)  // Keycloak 사용자 ID 저장
                 .build();
 
         User savedUser = userRepository.save(user);
-        log.info("사용자 등록 완료: userId={}, username={}", savedUser.getUserId(), savedUser.getUsername());
+        log.info("사용자 등록 완료: userId={}, username={}, keycloakUserId={}",
+                savedUser.getUserId(), savedUser.getUsername(), keycloakUserId);
 
         // 회원가입 이벤트 발행 (Kafka 연결 실패 시 무시, 비동기 처리)
         publishUserRegisteredEventAsync(savedUser.getUserId());
