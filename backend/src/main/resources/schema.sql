@@ -3,7 +3,6 @@ CREATE DATABASE IF NOT EXISTS hamkkebu_auth;
 USE hamkkebu_auth;
 
 -- Drop existing tables
-DROP TABLE IF EXISTS user_roles;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS tbl_outbox_event;
 
@@ -42,16 +41,6 @@ CREATE TABLE users (
     INDEX idx_is_deleted (is_deleted)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Create user_roles table for future use
-CREATE TABLE user_roles (
-    role_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    user_id BIGINT NOT NULL,
-    role_name VARCHAR(50) NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
-    UNIQUE KEY unique_user_role (user_id, role_name)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
 -- Create Transactional Outbox Event table
 CREATE TABLE tbl_outbox_event (
     -- Primary Key
@@ -78,6 +67,9 @@ CREATE TABLE tbl_outbox_event (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     published_at DATETIME,                     -- 발행 완료 시각
     last_retry_at DATETIME,                    -- 마지막 재시도 시각
+
+    -- Optimistic Locking
+    version BIGINT DEFAULT 0,                  -- 낙관적 락을 위한 버전 필드
 
     -- Indexes
     INDEX idx_status_created (status, created_at),
