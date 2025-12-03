@@ -134,8 +134,8 @@ export default defineComponent({
     const handleLogout = async () => {
       if (confirm('로그아웃 하시겠습니까?')) {
         closeMenu();
-        // Keycloak SSO 로그아웃 - 자동으로 리다이렉트됨
-        await logout();
+        // Keycloak SSO 로그아웃 - ledger-service 홈으로 리다이렉트
+        await logout('http://localhost:3002/home');
       }
     };
 
