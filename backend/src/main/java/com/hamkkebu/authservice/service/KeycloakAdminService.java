@@ -218,4 +218,53 @@ public class KeycloakAdminService {
             return false;
         }
     }
+
+    /**
+     * Keycloak 사용자 활성화/비활성화
+     *
+     * @param keycloakUserId Keycloak 사용자 ID
+     * @param enabled 활성화 여부
+     * @return 성공 여부
+     */
+    public boolean setUserEnabled(String keycloakUserId, boolean enabled) {
+        try {
+            RealmResource realmResource = keycloak.realm(realm);
+            UserResource userResource = realmResource.users().get(keycloakUserId);
+
+            UserRepresentation user = userResource.toRepresentation();
+            user.setEnabled(enabled);
+            userResource.update(user);
+
+            log.info("Keycloak 사용자 활성화 상태 변경: keycloakUserId={}, enabled={}", keycloakUserId, enabled);
+            return true;
+        } catch (NotFoundException e) {
+            log.warn("Keycloak 사용자를 찾을 수 없음: keycloakUserId={}", keycloakUserId);
+            return false;
+        } catch (Exception e) {
+            log.error("Keycloak 사용자 활성화 상태 변경 실패: keycloakUserId={}, error={}", keycloakUserId, e.getMessage(), e);
+            return false;
+        }
+    }
+
+    /**
+     * username으로 Keycloak 사용자 ID 조회
+     *
+     * @param username 사용자 아이디
+     * @return Keycloak 사용자 ID (없으면 null)
+     */
+    public String getKeycloakUserIdByUsername(String username) {
+        try {
+            RealmResource realmResource = keycloak.realm(realm);
+            UsersResource usersResource = realmResource.users();
+
+            List<UserRepresentation> users = usersResource.search(username, true);
+            if (!users.isEmpty()) {
+                return users.get(0).getId();
+            }
+            return null;
+        } catch (Exception e) {
+            log.error("Keycloak 사용자 조회 실패: username={}, error={}", username, e.getMessage());
+            return null;
+        }
+    }
 }

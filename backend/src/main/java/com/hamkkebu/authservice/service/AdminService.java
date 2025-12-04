@@ -28,6 +28,7 @@ public class AdminService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final KeycloakAdminService keycloakAdminService;
 
     /**
      * 전체 사용자 목록 조회 (탈퇴한 사용자 제외)
@@ -79,6 +80,18 @@ public class AdminService {
 
         User user = userRepository.findByUsernameAndIsDeletedFalse(username)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        // Keycloak 사용자 활성화 상태 변경
+        String keycloakUserId = user.getKeycloakUserId();
+        if (keycloakUserId != null) {
+            keycloakAdminService.setUserEnabled(keycloakUserId, isActive);
+        } else {
+            // keycloakUserId가 없으면 username으로 조회
+            keycloakUserId = keycloakAdminService.getKeycloakUserIdByUsername(username);
+            if (keycloakUserId != null) {
+                keycloakAdminService.setUserEnabled(keycloakUserId, isActive);
+            }
+        }
 
         user.updateActiveStatus(isActive);
         User updatedUser = userRepository.save(user);
