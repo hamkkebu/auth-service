@@ -5,7 +5,8 @@ metadata:
   namespace: hamkkebu
   labels:
     app: auth-service-backend
-    version: v1
+    service: auth-service
+    component: backend
 spec:
   replicas: 1
   selector:
@@ -15,21 +16,19 @@ spec:
     metadata:
       labels:
         app: auth-service-backend
-        version: v1
+        service: auth-service
+        component: backend
     spec:
       imagePullSecrets:
         - name: ecr-registry-secret
       containers:
-        - name: auth-service-backend
-          # 이미지 태그는 GitHub Actions에서 자동 업데이트
-          image: IMAGE_PLACEHOLDER
+        - name: backend
+          image: PLACEHOLDER_IMAGE
           ports:
-            - name: http
-              containerPort: 8081
-              protocol: TCP
-            - name: grpc
-              containerPort: 9091
-              protocol: TCP
+            - containerPort: 8080
+              name: http
+            - containerPort: 9090
+              name: grpc
           resources:
             requests:
               memory: "128Mi"
@@ -37,51 +36,41 @@ spec:
             limits:
               memory: "256Mi"
               cpu: "250m"
-          envFrom:
-            - configMapRef:
-                name: auth-service-backend-config
           env:
-            # 데이터베이스 호스트 (ConfigMap에서 주입하거나 직접 설정)
-            - name: DB_HOST
+            - name: JAVA_OPTS
+              value: "-Xms64m -Xmx128m -XX:+UseG1GC -XX:MaxGCPauseMillis=100"
+            - name: SPRING_PROFILES_ACTIVE
+              value: "dev"
+            - name: DB_URL
               valueFrom:
                 configMapKeyRef:
-                  name: hamkkebu-common-config
-                  key: DB_HOST
-                  optional: true
-            # Secrets는 별도 Secret 리소스에서 주입
+                  name: auth-service-config
+                  key: DB_URL
             - name: DB_USERNAME
               valueFrom:
                 secretKeyRef:
                   name: auth-service-secrets
                   key: DB_USERNAME
-                  optional: true
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: auth-service-secrets
                   key: DB_PASSWORD
-                  optional: true
+            - name: GRPC_SERVER_PORT
+              value: "9090"
           livenessProbe:
             httpGet:
-              path: /actuator/health/liveness
-              port: 8081
-            initialDelaySeconds: 90
-            periodSeconds: 30
-            timeoutSeconds: 5
-            failureThreshold: 3
-          readinessProbe:
-            httpGet:
-              path: /actuator/health/readiness
-              port: 8081
+              path: /actuator/health
+              port: 8080
             initialDelaySeconds: 60
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 3
-          startupProbe:
+          readinessProbe:
             httpGet:
               path: /actuator/health
-              port: 8081
+              port: 8080
             initialDelaySeconds: 30
-            periodSeconds: 10
-            failureThreshold: 30
-      terminationGracePeriodSeconds: 30
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3

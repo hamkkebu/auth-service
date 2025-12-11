@@ -5,21 +5,23 @@ metadata:
   namespace: hamkkebu
   labels:
     app: auth-service-backend
+    service: auth-service
+    component: backend
 spec:
   type: ClusterIP
-  selector:
-    app: auth-service-backend
   ports:
     - name: http
       port: 8081
-      targetPort: 8081
+      targetPort: 8080
       protocol: TCP
     - name: grpc
       port: 9091
-      targetPort: 9091
+      targetPort: 9090
       protocol: TCP
+  selector:
+    app: auth-service-backend
 ---
-# NodePort Service for external access (개발/테스트용)
+# NodePort for external access (dev only)
 apiVersion: v1
 kind: Service
 metadata:
@@ -27,13 +29,15 @@ metadata:
   namespace: hamkkebu
   labels:
     app: auth-service-backend
+    service: auth-service
+    component: backend
 spec:
   type: NodePort
-  selector:
-    app: auth-service-backend
   ports:
     - name: http
       port: 8081
-      targetPort: 8081
-      nodePort: 31081
+      targetPort: 8080
+      nodePort: 30081
       protocol: TCP
+  selector:
+    app: auth-service-backend
