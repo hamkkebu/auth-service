@@ -200,7 +200,7 @@ jobs:
             --from-literal=KAFKA_BOOTSTRAP_SERVERS="${{ secrets.KAFKA_BOOTSTRAP_SERVERS }}" \
             --from-literal=KEYCLOAK_AUTH_SERVER_URL="${{ secrets.KEYCLOAK_AUTH_SERVER_URL }}" \
             --from-literal=KEYCLOAK_REALM="${{ secrets.KEYCLOAK_REALM }}" \
-            --dry-run=client -o yaml | kubectl apply -f -
+            --dry-run=client -o yaml | kubectl apply --validate=false -f -
 
       - name: Create/Update Source Secret for ExternalSecrets
         run: |
@@ -208,7 +208,7 @@ jobs:
             --namespace=hamkkebu \
             --from-literal=username="${{ secrets.DB_USERNAME }}" \
             --from-literal=password="${{ secrets.DB_PASSWORD }}" \
-            --dry-run=client -o yaml | kubectl apply -f -
+            --dry-run=client -o yaml | kubectl apply --validate=false -f -
 
   # ============================================
   # PR 테스트 (빌드만, 배포 안함)
