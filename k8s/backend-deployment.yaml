@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service-backend
+  namespace: hamkkebu
+  labels:
+    app: auth-service-backend
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth-service-backend
+  template:
+    metadata:
+      labels:
+        app: auth-service-backend
+        version: v1
+    spec:
+      imagePullSecrets:
+        - name: ecr-registry-secret
+      containers:
+        - name: auth-service-backend
+          # 이미지 태그는 GitHub Actions에서 자동 업데이트
+          image: IMAGE_PLACEHOLDER
+          ports:
+            - name: http
+              containerPort: 8081
+              protocol: TCP
+            - name: grpc
+              containerPort: 9091
+              protocol: TCP
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+          envFrom:
+            - configMapRef:
+                name: auth-service-backend-config
+          env:
+            # 데이터베이스 호스트 (ConfigMap에서 주입하거나 직접 설정)
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: hamkkebu-common-config
+                  key: DB_HOST
+                  optional: true
+            # Secrets는 별도 Secret 리소스에서 주입
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: auth-service-secrets
+                  key: DB_USERNAME
+                  optional: true
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: auth-service-secrets
+                  key: DB_PASSWORD
+                  optional: true
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8081
+            initialDelaySeconds: 90
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8081
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 30
+      terminationGracePeriodSeconds: 30
