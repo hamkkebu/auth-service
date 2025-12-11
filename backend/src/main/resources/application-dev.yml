@@ -12,8 +12,8 @@ spring:
   datasource:
     # Auth Service는 3307 포트 사용 (Boilerplate는 3306)
     url: jdbc:mysql://localhost:3307/hamkkebu_auth?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8
-    username: root
-    password: root
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -65,10 +65,10 @@ kafka:
 
 # Keycloak SSO 설정 (개발 환경)
 keycloak:
-  auth-server-url: http://localhost:8180
+  auth-server-url: ${KEYCLOAK_AUTH_SERVER_URL:http://localhost:8180}
   realm: hamkkebu
   client-id: hamkkebu-backend
-  client-secret: hamkkebu-backend-secret
+  client-secret: ${KEYCLOAK_CLIENT_SECRET:}
 
 # Spring Security OAuth2 Resource Server 설정 (Keycloak 연동)
 spring.security.oauth2.resourceserver.jwt:
