@@ -46,13 +46,8 @@ services:
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
       JWT_SECRET: ${JWT_SECRET}
-      # 공유 인프라 네트워크의 Redis/Kafka에 연결 (컨테이너 이름 사용)
-      REDIS_HOST: hamkkebu-boilerplate-redis
-      REDIS_PORT: 6379
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-devRedisPassword123!}
+      # 공유 인프라 네트워크의 Kafka에 연결 (컨테이너 이름 사용)
       KAFKA_BOOTSTRAP_SERVERS: hamkkebu-boilerplate-kafka:29092
-      LOGIN_MAX_ATTEMPTS: ${LOGIN_MAX_ATTEMPTS:-20}
-      LOGIN_BLOCK_DURATION: ${LOGIN_BLOCK_DURATION:-3}
       # Keycloak SSO 설정 (Docker 컨테이너에서 호스트 머신 접근)
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://host.docker.internal:8180/realms/hamkkebu
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://host.docker.internal:8180/realms/hamkkebu/protocol/openid-connect/certs
