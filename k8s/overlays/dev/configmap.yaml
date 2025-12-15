@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: auth-service-config
+  labels:
+    app: auth-service
+    environment: dev
+data:
+  # Dev: 공유 RDS 사용 (hamkkebu_auth 데이터베이스)
+  # RDS 엔드포인트는 GitHub Secrets에서 관리
+  DB_URL: "jdbc:mysql://${RDS_ENDPOINT}:3306/hamkkebu_auth?useSSL=true&requireSSL=true"
+
+  # Spring 프로필
+  SPRING_PROFILES_ACTIVE: "dev"
+
+  # Kafka 설정
+  KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
