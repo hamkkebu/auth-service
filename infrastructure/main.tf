@@ -1,3 +1,9 @@
+# ============================================
+# Auth Service - Infrastructure
+# ============================================
+# RDS instance for auth-service
+# 공통 인프라(VPC, EKS)는 boilerplate에서 관리
+
 terraform {
   required_version = ">= 1.5.0"
 
@@ -9,267 +15,144 @@ terraform {
   }
 
   backend "s3" {
-    key    = "services/auth-service/terraform.tfstate"
-    region = "ap-northeast-2"
-    encrypt = true
+    bucket         = "hamkkebu-terraform-state"
+    key            = "services/auth-service/terraform.tfstate"
+    region         = "ap-northeast-2"
+    encrypt        = true
     dynamodb_table = "terraform-state-lock"
   }
 }
 
 provider "aws" {
   region = var.aws_region
+
+  default_tags {
+    tags = {
+      Project     = var.project_name
+      Environment = var.environment
+      Service     = "auth"
+      ManagedBy   = "terraform"
+    }
+  }
 }
 
-# Data sources to reference common infrastructure
-data "terraform_remote_state" "common" {
+# ============================================
+# Data Sources - 공통 인프라 참조
+# ============================================
+data "terraform_remote_state" "shared" {
   backend = "s3"
+
   config = {
-    bucket = var.terraform_state_bucket
-    key    = "common/terraform.tfstate"
-    region = var.aws_region
+    bucket = "hamkkebu-terraform-state"
+    key    = "environments/dev/terraform.tfstate"
+    region = "ap-northeast-2"
   }
 }
 
-# IAM Role for ECS Task Execution
-resource "aws_iam_role" "ecs_task_execution" {
-  name = "${var.project_name}-${var.environment}-auth-service-task-execution-role"
+# ============================================
+# RDS Security Group
+# ============================================
+resource "aws_security_group" "rds" {
+  name        = "${var.project_name}-${var.environment}-auth-rds-sg"
+  description = "Security group for auth-service RDS"
+  vpc_id      = data.terraform_remote_state.shared.outputs.vpc_id
 
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Action = "sts:AssumeRole"
-      Effect = "Allow"
-      Principal = {
-        Service = "ecs-tasks.amazonaws.com"
-      }
-    }]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "ecs_task_execution" {
-  role       = aws_iam_role.ecs_task_execution.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
-}
-
-# IAM Role for ECS Task
-resource "aws_iam_role" "ecs_task" {
-  name = "${var.project_name}-${var.environment}-auth-service-task-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Action = "sts:AssumeRole"
-      Effect = "Allow"
-      Principal = {
-        Service = "ecs-tasks.amazonaws.com"
-      }
-    }]
-  })
-}
-
-# CloudWatch Log Group for auth-service
-resource "aws_cloudwatch_log_group" "auth_service" {
-  name              = "/ecs/${var.project_name}-${var.environment}/auth-service"
-  retention_in_days = 7
-
-  tags = {
-    Name        = "${var.project_name}-${var.environment}-auth-service-logs"
-    Service     = "auth-service"
-    Environment = var.environment
-  }
-}
-
-# ECS Task Definition
-resource "aws_ecs_task_definition" "auth_service" {
-  family                   = "${var.project_name}-${var.environment}-auth-service"
-  network_mode             = "awsvpc"
-  requires_compatibilities = ["FARGATE"]
-  cpu                      = var.task_cpu
-  memory                   = var.task_memory
-  execution_role_arn       = aws_iam_role.ecs_task_execution.arn
-  task_role_arn            = aws_iam_role.ecs_task.arn
-
-  container_definitions = jsonencode([{
-    name  = "auth-service"
-    image = "${var.ecr_repository_url}:${var.image_tag}"
-
-    portMappings = [{
-      containerPort = var.container_port
-      protocol      = "tcp"
-    }]
-
-    environment = [
-      {
-        name  = "SPRING_PROFILES_ACTIVE"
-        value = var.environment
-      },
-      {
-        name  = "SERVER_PORT"
-        value = tostring(var.container_port)
-      },
-      {
-        name  = "DB_HOST"
-        value = data.terraform_remote_state.common.outputs.db_endpoint
-      },
-      {
-        name  = "DB_PORT"
-        value = tostring(data.terraform_remote_state.common.outputs.db_port)
-      },
-      {
-        name  = "DB_NAME"
-        value = "hamkkebu_auth"
-      }
-    ]
-
-    secrets = [
-      {
-        name      = "DB_USERNAME"
-        valueFrom = "${aws_secretsmanager_secret.db_credentials.arn}:username::"
-      },
-      {
-        name      = "DB_PASSWORD"
-        valueFrom = "${aws_secretsmanager_secret.db_credentials.arn}:password::"
-      }
-    ]
-
-    logConfiguration = {
-      logDriver = "awslogs"
-      options = {
-        "awslogs-group"         = aws_cloudwatch_log_group.auth_service.name
-        "awslogs-region"        = var.aws_region
-        "awslogs-stream-prefix" = "ecs"
-      }
-    }
-
-    healthCheck = {
-      command     = ["CMD-SHELL", "curl -f http://localhost:${var.container_port}/api/users/health || exit 1"]
-      interval    = 30
-      timeout     = 5
-      retries     = 3
-      startPeriod = 60
-    }
-  }])
-
-  tags = {
-    Name        = "${var.project_name}-${var.environment}-auth-service"
-    Service     = "auth-service"
-    Environment = var.environment
-  }
-}
-
-# Secrets Manager for database credentials
-resource "aws_secretsmanager_secret" "db_credentials" {
-  name = "${var.project_name}/${var.environment}/auth-service/db-credentials"
-
-  tags = {
-    Name        = "${var.project_name}-${var.environment}-auth-service-db-credentials"
-    Service     = "auth-service"
-    Environment = var.environment
-  }
-}
-
-# ALB Target Group for auth-service
-resource "aws_lb_target_group" "auth_service" {
-  name        = "${var.project_name}-${var.environment}-auth-svc-tg"
-  port        = var.container_port
-  protocol    = "HTTP"
-  vpc_id      = data.terraform_remote_state.common.outputs.vpc_id
-  target_type = "ip"
-
-  health_check {
-    enabled             = true
-    healthy_threshold   = 2
-    unhealthy_threshold = 3
-    timeout             = 5
-    interval            = 30
-    path                = "/api/users/health"
-    matcher             = "200"
+  ingress {
+    description     = "MySQL from EKS"
+    from_port       = 3306
+    to_port         = 3306
+    protocol        = "tcp"
+    security_groups = [data.terraform_remote_state.shared.outputs.eks_cluster_security_group_id]
   }
 
-  deregistration_delay = 30
-
-  tags = {
-    Name        = "${var.project_name}-${var.environment}-auth-service-tg"
-    Service     = "auth-service"
-    Environment = var.environment
-  }
-}
-
-# ALB Listener Rule for auth-service
-resource "aws_lb_listener_rule" "auth_service" {
-  listener_arn = data.terraform_remote_state.common.outputs.alb_listener_arn
-
-  action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.auth_service.arn
-  }
-
-  condition {
-    path_pattern {
-      values = ["/api/auth/*", "/api/users/*"]
-    }
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   tags = {
-    Name        = "${var.project_name}-${var.environment}-auth-service-rule"
-    Service     = "auth-service"
-    Environment = var.environment
+    Name = "${var.project_name}-${var.environment}-auth-rds-sg"
   }
 }
 
-# ECS Service
-resource "aws_ecs_service" "auth_service" {
-  name            = "${var.project_name}-${var.environment}-auth-service"
-  cluster         = data.terraform_remote_state.common.outputs.ecs_cluster_id
-  task_definition = aws_ecs_task_definition.auth_service.arn
-  desired_count   = var.desired_count
-  launch_type     = "FARGATE"
-
-  network_configuration {
-    subnets          = data.terraform_remote_state.common.outputs.private_subnet_ids
-    security_groups  = [data.terraform_remote_state.common.outputs.ecs_security_group_id]
-    assign_public_ip = false
-  }
-
-  load_balancer {
-    target_group_arn = aws_lb_target_group.auth_service.arn
-    container_name   = "auth-service"
-    container_port   = var.container_port
-  }
-
-  depends_on = [aws_lb_listener_rule.auth_service]
+# ============================================
+# RDS Subnet Group
+# ============================================
+resource "aws_db_subnet_group" "auth" {
+  name       = "${var.project_name}-${var.environment}-auth-db-subnet"
+  subnet_ids = data.terraform_remote_state.shared.outputs.private_subnet_ids
 
   tags = {
-    Name        = "${var.project_name}-${var.environment}-auth-service"
-    Service     = "auth-service"
-    Environment = var.environment
+    Name = "${var.project_name}-${var.environment}-auth-db-subnet"
   }
 }
 
-# Auto Scaling
-resource "aws_appautoscaling_target" "auth_service" {
-  max_capacity       = var.max_capacity
-  min_capacity       = var.min_capacity
-  resource_id        = "service/${data.terraform_remote_state.common.outputs.ecs_cluster_name}/${aws_ecs_service.auth_service.name}"
-  scalable_dimension = "ecs:service:DesiredCount"
-  service_namespace  = "ecs"
+# ============================================
+# RDS Instance
+# ============================================
+resource "aws_db_instance" "auth" {
+  identifier = "${var.project_name}-${var.environment}-auth"
+
+  engine               = "mysql"
+  engine_version       = var.db_engine_version
+  instance_class       = var.db_instance_class
+  allocated_storage    = var.db_allocated_storage
+  max_allocated_storage = var.db_max_allocated_storage
+
+  db_name  = var.db_name
+  username = var.db_username
+  password = var.db_password
+
+  db_subnet_group_name   = aws_db_subnet_group.auth.name
+  vpc_security_group_ids = [aws_security_group.rds.id]
+
+  skip_final_snapshot     = var.environment == "dev" ? true : false
+  final_snapshot_identifier = var.environment == "dev" ? null : "${var.project_name}-${var.environment}-auth-final"
+
+  backup_retention_period = var.db_backup_retention_period
+  backup_window           = "03:00-04:00"
+  maintenance_window      = "Mon:04:00-Mon:05:00"
+
+  multi_az               = var.environment == "prod" ? true : false
+  publicly_accessible    = false
+  storage_encrypted      = true
+
+  parameter_group_name = aws_db_parameter_group.auth.name
+
+  tags = {
+    Name = "${var.project_name}-${var.environment}-auth-rds"
+  }
+
+  lifecycle {
+    prevent_destroy = false  # dev 환경에서는 false
+  }
 }
 
-resource "aws_appautoscaling_policy" "auth_service_cpu" {
-  name               = "${var.project_name}-${var.environment}-auth-service-cpu-scaling"
-  policy_type        = "TargetTrackingScaling"
-  resource_id        = aws_appautoscaling_target.auth_service.resource_id
-  scalable_dimension = aws_appautoscaling_target.auth_service.scalable_dimension
-  service_namespace  = aws_appautoscaling_target.auth_service.service_namespace
+# ============================================
+# RDS Parameter Group
+# ============================================
+resource "aws_db_parameter_group" "auth" {
+  name   = "${var.project_name}-${var.environment}-auth-params"
+  family = "mysql8.0"
 
-  target_tracking_scaling_policy_configuration {
-    target_value = 70.0
+  parameter {
+    name  = "character_set_server"
+    value = "utf8mb4"
+  }
 
-    predefined_metric_specification {
-      predefined_metric_type = "ECSServiceAverageCPUUtilization"
-    }
+  parameter {
+    name  = "character_set_client"
+    value = "utf8mb4"
+  }
 
-    scale_in_cooldown  = 300
-    scale_out_cooldown = 60
+  parameter {
+    name  = "collation_server"
+    value = "utf8mb4_unicode_ci"
+  }
+
+  tags = {
+    Name = "${var.project_name}-${var.environment}-auth-params"
   }
 }
