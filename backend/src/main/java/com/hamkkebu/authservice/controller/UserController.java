@@ -6,7 +6,11 @@ import com.hamkkebu.authservice.data.dto.UserRequest;
 import com.hamkkebu.authservice.data.dto.UserResponse;
 import com.hamkkebu.authservice.service.UserService;
 import com.hamkkebu.boilerplate.common.dto.ApiResponse;
+import com.hamkkebu.boilerplate.common.exception.BusinessException;
+import com.hamkkebu.boilerplate.common.exception.ErrorCode;
+import com.hamkkebu.boilerplate.common.user.annotation.CurrentUser;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -106,18 +110,51 @@ public class UserController {
     }
 
     /**
+     * 내 정보 조회 (로그인한 사용자 본인)
+     *
+     * @param currentUserId 현재 로그인한 사용자 ID
+     * @return 사용자 정보
+     */
+    @Operation(
+        summary = "내 정보 조회",
+        description = "현재 로그인한 사용자의 정보를 조회합니다."
+    )
+    @GetMapping("/me")
+    public ApiResponse<UserResponse> getMyInfo(
+            @Parameter(hidden = true) @CurrentUser Long currentUserId) {
+        log.debug("내 정보 조회: userId={}", currentUserId);
+        if (currentUserId == null) {
+            throw new BusinessException(ErrorCode.AUTHENTICATION_FAILED);
+        }
+        UserResponse response = userService.getUserById(currentUserId);
+        return ApiResponse.success(response);
+    }
+
+    /**
      * 사용자 조회 by userId
      *
+     * <p>보안: 본인만 조회 가능합니다.</p>
+     *
+     * @param currentUserId 현재 로그인한 사용자 ID
      * @param userId 사용자 ID
      * @return 사용자 정보
      */
     @Operation(
         summary = "사용자 조회 (ID)",
-        description = "사용자 ID로 사용자 정보를 조회합니다."
+        description = "사용자 ID로 사용자 정보를 조회합니다. 본인만 조회 가능합니다."
     )
     @GetMapping("/{userId}")
-    public ApiResponse<UserResponse> getUserById(@PathVariable Long userId) {
-        log.debug("사용자 조회: userId={}", userId);
+    public ApiResponse<UserResponse> getUserById(
+            @Parameter(hidden = true) @CurrentUser Long currentUserId,
+            @PathVariable Long userId) {
+        log.debug("사용자 조회: userId={}, currentUserId={}", userId, currentUserId);
+
+        // 본인만 조회 가능
+        if (currentUserId == null || !currentUserId.equals(userId)) {
+            log.warn("사용자 {}가 다른 사용자 {}의 정보를 조회 시도", currentUserId, userId);
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        }
+
         UserResponse response = userService.getUserById(userId);
         return ApiResponse.success(response);
     }
@@ -125,33 +162,66 @@ public class UserController {
     /**
      * 사용자 조회 by username
      *
+     * <p>보안: 본인만 조회 가능합니다.</p>
+     *
+     * @param currentUserId 현재 로그인한 사용자 ID
      * @param username 사용자 아이디
      * @return 사용자 정보
      */
     @Operation(
         summary = "사용자 조회 (username)",
-        description = "사용자 아이디로 사용자 정보를 조회합니다."
+        description = "사용자 아이디로 사용자 정보를 조회합니다. 본인만 조회 가능합니다."
     )
     @GetMapping("/username/{username}")
-    public ApiResponse<UserResponse> getUserByUsername(@PathVariable String username) {
-        log.debug("사용자 조회: username={}", username);
+    public ApiResponse<UserResponse> getUserByUsername(
+            @Parameter(hidden = true) @CurrentUser Long currentUserId,
+            @PathVariable String username) {
+        log.debug("사용자 조회: username={}, currentUserId={}", username, currentUserId);
+
+        if (currentUserId == null) {
+            throw new BusinessException(ErrorCode.AUTHENTICATION_FAILED);
+        }
+
+        // 조회하려는 사용자가 본인인지 확인
         UserResponse response = userService.getUserByUsername(username);
+        if (!currentUserId.equals(response.getUserId())) {
+            log.warn("사용자 {}가 다른 사용자 {}의 정보를 조회 시도", currentUserId, username);
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        }
+
         return ApiResponse.success(response);
     }
 
     /**
      * Keycloak 사용자 여부 확인
      *
+     * <p>보안: 본인만 확인 가능합니다.</p>
+     *
+     * @param currentUserId 현재 로그인한 사용자 ID
      * @param username 사용자 아이디
      * @return Keycloak 사용자 여부
      */
     @Operation(
         summary = "Keycloak 사용자 여부 확인",
-        description = "사용자가 Keycloak SSO 사용자인지 확인합니다."
+        description = "사용자가 Keycloak SSO 사용자인지 확인합니다. 본인만 확인 가능합니다."
     )
     @GetMapping("/username/{username}/keycloak")
-    public ApiResponse<Boolean> isKeycloakUser(@PathVariable String username) {
-        log.debug("Keycloak 사용자 확인: username={}", username);
+    public ApiResponse<Boolean> isKeycloakUser(
+            @Parameter(hidden = true) @CurrentUser Long currentUserId,
+            @PathVariable String username) {
+        log.debug("Keycloak 사용자 확인: username={}, currentUserId={}", username, currentUserId);
+
+        if (currentUserId == null) {
+            throw new BusinessException(ErrorCode.AUTHENTICATION_FAILED);
+        }
+
+        // 조회하려는 사용자가 본인인지 확인
+        UserResponse user = userService.getUserByUsername(username);
+        if (!currentUserId.equals(user.getUserId())) {
+            log.warn("사용자 {}가 다른 사용자 {}의 Keycloak 정보를 조회 시도", currentUserId, username);
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        }
+
         boolean isKeycloak = userService.isKeycloakUser(username);
         return ApiResponse.success(isKeycloak);
     }
@@ -161,20 +231,35 @@ public class UserController {
      *
      * <p>Keycloak 사용자는 비밀번호 없이 탈퇴 가능합니다.</p>
      * <p>일반 사용자는 비밀번호 확인이 필요합니다.</p>
+     * <p>보안: 본인만 탈퇴 가능합니다.</p>
      *
+     * @param currentUserId 현재 로그인한 사용자 ID
      * @param username 사용자 아이디
      * @param request 삭제 요청 (비밀번호 포함, Keycloak 사용자는 선택)
      * @return 성공 메시지
      */
     @Operation(
         summary = "회원 탈퇴",
-        description = "사용자 아이디로 회원을 탈퇴합니다. Keycloak 사용자는 비밀번호 없이, 일반 사용자는 비밀번호 확인이 필요합니다."
+        description = "회원을 탈퇴합니다. Keycloak 사용자는 비밀번호 없이, 일반 사용자는 비밀번호 확인이 필요합니다. 본인만 탈퇴 가능합니다."
     )
     @DeleteMapping("/username/{username}")
     public ApiResponse<Void> deleteUserByUsername(
+            @Parameter(hidden = true) @CurrentUser Long currentUserId,
             @PathVariable String username,
             @RequestBody(required = false) DeleteUserRequest request) {
-        log.info("회원 탈퇴 요청: username={}", username);
+        log.info("회원 탈퇴 요청: username={}, currentUserId={}", username, currentUserId);
+
+        if (currentUserId == null) {
+            throw new BusinessException(ErrorCode.AUTHENTICATION_FAILED);
+        }
+
+        // 삭제하려는 사용자가 본인인지 확인
+        UserResponse user = userService.getUserByUsername(username);
+        if (!currentUserId.equals(user.getUserId())) {
+            log.warn("사용자 {}가 다른 사용자 {}의 탈퇴를 시도", currentUserId, username);
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        }
+
         String password = request != null ? request.getPassword() : null;
         userService.deleteUserByUsername(username, password);
         return ApiResponse.success(null, "회원 탈퇴가 완료되었습니다");
