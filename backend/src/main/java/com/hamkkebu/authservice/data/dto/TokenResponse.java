@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 /**
  * JWT 토큰 응답 DTO
@@ -13,7 +12,6 @@ import lombok.Setter;
  * <p>보안 강화: refreshToken은 HttpOnly Cookie로 전달되므로 응답에서 제외 가능</p>
  */
 @Getter
-@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

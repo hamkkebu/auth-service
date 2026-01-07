@@ -4,18 +4,14 @@ import com.hamkkebu.authservice.data.dto.DuplicateCheckResponse;
 import com.hamkkebu.authservice.data.dto.UserRequest;
 import com.hamkkebu.authservice.data.dto.UserResponse;
 import com.hamkkebu.authservice.data.entity.User;
-import com.hamkkebu.authservice.data.event.UserDeletedEvent;
-import com.hamkkebu.authservice.data.event.UserRegisteredEvent;
 import com.hamkkebu.authservice.data.mapper.UserMapper;
 import com.hamkkebu.authservice.repository.UserRepository;
 import com.hamkkebu.boilerplate.common.enums.Role;
 import com.hamkkebu.boilerplate.common.exception.BusinessException;
 import com.hamkkebu.boilerplate.common.exception.ErrorCode;
-import com.hamkkebu.boilerplate.common.publisher.EventPublisher;
 import com.hamkkebu.boilerplate.common.security.PasswordValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,11 +31,8 @@ public class UserService {
     private final UserMapper userMapper;
     private final PasswordValidator passwordValidator;
     private final PasswordEncoder passwordEncoder;
-    private final EventPublisher eventPublisher;
+    private final UserEventPublisher userEventPublisher;
     private final KeycloakAdminService keycloakAdminService;
-
-    @Value("${kafka.topics.user-events:user.events}")
-    private String userEventsTopic;
 
     /**
      * 사용자 등록 (회원가입)
@@ -104,7 +97,7 @@ public class UserService {
                 savedUser.getUserId(), savedUser.getUsername(), keycloakUserId);
 
         // 회원가입 이벤트 발행 (Kafka 연결 실패 시 무시, 비동기 처리)
-        publishUserRegisteredEventAsync(savedUser.getUserId());
+        userEventPublisher.publishUserRegisteredEvent(savedUser.getUserId());
 
         return userMapper.toDto(savedUser);
     }
@@ -228,7 +221,7 @@ public class UserService {
         log.info("사용자 탈퇴 완료: username={}, isKeycloakUser={}", username, isKeycloakUser);
 
         // 회원탈퇴 이벤트 발행 (Kafka 연결 실패 시 무시, 비동기 처리)
-        publishUserDeletedEventAsync(user.getUserId());
+        userEventPublisher.publishUserDeletedEvent(user.getUserId());
     }
 
     /**
@@ -243,35 +236,4 @@ public class UserService {
                 .map(user -> StringUtils.hasText(user.getKeycloakUserId()))
                 .orElse(false);
     }
-
-    /**
-     * 회원가입 이벤트 비동기 발행 (Kafka 연결 실패 시 무시)
-     */
-    private void publishUserRegisteredEventAsync(Long userId) {
-        new Thread(() -> {
-            try {
-                UserRegisteredEvent event = UserRegisteredEvent.of(userId);
-                eventPublisher.publish(userEventsTopic, event);
-                log.info("회원가입 이벤트 발행 완료: userId={}, eventId={}", userId, event.getEventId());
-            } catch (Exception e) {
-                log.warn("회원가입 이벤트 발행 실패 (Kafka 연결 불가): userId={}, error={}", userId, e.getMessage());
-            }
-        }).start();
-    }
-
-    /**
-     * 회원탈퇴 이벤트 비동기 발행 (Kafka 연결 실패 시 무시)
-     */
-    private void publishUserDeletedEventAsync(Long userId) {
-        new Thread(() -> {
-            try {
-                UserDeletedEvent event = UserDeletedEvent.of(userId);
-                eventPublisher.publish(userEventsTopic, event);
-                log.info("회원탈퇴 이벤트 발행 완료: userId={}, eventId={}", userId, event.getEventId());
-            } catch (Exception e) {
-                log.warn("회원탈퇴 이벤트 발행 실패 (Kafka 연결 불가): userId={}, error={}", userId, e.getMessage());
-            }
-        }).start();
-    }
-
 }
