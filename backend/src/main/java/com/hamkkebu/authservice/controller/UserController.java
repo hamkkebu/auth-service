@@ -15,6 +15,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -46,10 +48,11 @@ public class UserController {
         security = {} // 인증 불필요
     )
     @PostMapping
-    public ApiResponse<UserResponse> registerUser(@Valid @RequestBody UserRequest request) {
+    public ResponseEntity<ApiResponse<UserResponse>> registerUser(@Valid @RequestBody UserRequest request) {
         log.info("회원가입 요청: username={}", request.getUsername());
         UserResponse response = userService.registerUser(request);
-        return ApiResponse.success(response, "회원가입이 완료되었습니다");
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(response, "회원가입이 완료되었습니다"));
     }
 
     /**
@@ -64,10 +67,10 @@ public class UserController {
         security = {} // 인증 불필요
     )
     @GetMapping("/check/{username}")
-    public ApiResponse<DuplicateCheckResponse> checkUsernameDuplicate(@PathVariable String username) {
+    public ResponseEntity<ApiResponse<DuplicateCheckResponse>> checkUsernameDuplicate(@PathVariable String username) {
         log.debug("아이디 중복 확인: username={}", username);
         DuplicateCheckResponse response = userService.checkUsernameDuplicate(username);
-        return ApiResponse.success(response);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     /**
@@ -84,11 +87,11 @@ public class UserController {
         security = {} // 인증 불필요
     )
     @GetMapping("/check/nickname/{nickname}")
-    public ApiResponse<DuplicateCheckResponse> checkNicknameDuplicate(@PathVariable String nickname) {
+    public ResponseEntity<ApiResponse<DuplicateCheckResponse>> checkNicknameDuplicate(@PathVariable String nickname) {
         log.debug("닉네임 중복 확인: nickname={}", nickname);
         // 현재는 nickname 필드가 없으므로 username 중복 확인으로 처리
         DuplicateCheckResponse response = userService.checkUsernameDuplicate(nickname);
-        return ApiResponse.success(response);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     /**
@@ -103,10 +106,10 @@ public class UserController {
         security = {} // 인증 불필요
     )
     @GetMapping("/check/email/{email}")
-    public ApiResponse<DuplicateCheckResponse> checkEmailDuplicate(@PathVariable String email) {
+    public ResponseEntity<ApiResponse<DuplicateCheckResponse>> checkEmailDuplicate(@PathVariable String email) {
         log.debug("이메일 중복 확인: email={}", email);
         DuplicateCheckResponse response = userService.checkEmailDuplicate(email);
-        return ApiResponse.success(response);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     /**
@@ -120,14 +123,14 @@ public class UserController {
         description = "현재 로그인한 사용자의 정보를 조회합니다."
     )
     @GetMapping("/me")
-    public ApiResponse<UserResponse> getMyInfo(
+    public ResponseEntity<ApiResponse<UserResponse>> getMyInfo(
             @Parameter(hidden = true) @CurrentUser Long currentUserId) {
         log.debug("내 정보 조회: userId={}", currentUserId);
         if (currentUserId == null) {
             throw new BusinessException(ErrorCode.AUTHENTICATION_FAILED);
         }
         UserResponse response = userService.getUserById(currentUserId);
-        return ApiResponse.success(response);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     /**
@@ -144,7 +147,7 @@ public class UserController {
         description = "사용자 ID로 사용자 정보를 조회합니다. 본인만 조회 가능합니다."
     )
     @GetMapping("/{userId}")
-    public ApiResponse<UserResponse> getUserById(
+    public ResponseEntity<ApiResponse<UserResponse>> getUserById(
             @Parameter(hidden = true) @CurrentUser Long currentUserId,
             @PathVariable Long userId) {
         log.debug("사용자 조회: userId={}, currentUserId={}", userId, currentUserId);
@@ -156,7 +159,7 @@ public class UserController {
         }
 
         UserResponse response = userService.getUserById(userId);
-        return ApiResponse.success(response);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     /**
@@ -173,7 +176,7 @@ public class UserController {
         description = "사용자 아이디로 사용자 정보를 조회합니다. 본인만 조회 가능합니다."
     )
     @GetMapping("/username/{username}")
-    public ApiResponse<UserResponse> getUserByUsername(
+    public ResponseEntity<ApiResponse<UserResponse>> getUserByUsername(
             @Parameter(hidden = true) @CurrentUser Long currentUserId,
             @PathVariable String username) {
         log.debug("사용자 조회: username={}, currentUserId={}", username, currentUserId);
@@ -189,7 +192,7 @@ public class UserController {
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
         }
 
-        return ApiResponse.success(response);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     /**
@@ -206,7 +209,7 @@ public class UserController {
         description = "사용자가 Keycloak SSO 사용자인지 확인합니다. 본인만 확인 가능합니다."
     )
     @GetMapping("/username/{username}/keycloak")
-    public ApiResponse<Boolean> isKeycloakUser(
+    public ResponseEntity<ApiResponse<Boolean>> isKeycloakUser(
             @Parameter(hidden = true) @CurrentUser Long currentUserId,
             @PathVariable String username) {
         log.debug("Keycloak 사용자 확인: username={}, currentUserId={}", username, currentUserId);
@@ -223,7 +226,7 @@ public class UserController {
         }
 
         boolean isKeycloak = userService.isKeycloakUser(username);
-        return ApiResponse.success(isKeycloak);
+        return ResponseEntity.ok(ApiResponse.success(isKeycloak));
     }
 
     /**
@@ -243,10 +246,10 @@ public class UserController {
         description = "회원을 탈퇴합니다. Keycloak 사용자는 비밀번호 없이, 일반 사용자는 비밀번호 확인이 필요합니다. 본인만 탈퇴 가능합니다."
     )
     @DeleteMapping("/username/{username}")
-    public ApiResponse<Void> deleteUserByUsername(
+    public ResponseEntity<ApiResponse<Void>> deleteUserByUsername(
             @Parameter(hidden = true) @CurrentUser Long currentUserId,
             @PathVariable String username,
-            @RequestBody(required = false) DeleteUserRequest request) {
+            @Valid @RequestBody(required = false) DeleteUserRequest request) {
         log.info("회원 탈퇴 요청: username={}, currentUserId={}", username, currentUserId);
 
         if (currentUserId == null) {
@@ -262,6 +265,6 @@ public class UserController {
 
         String password = request != null ? request.getPassword() : null;
         userService.deleteUserByUsername(username, password);
-        return ApiResponse.success(null, "회원 탈퇴가 완료되었습니다");
+        return ResponseEntity.ok(ApiResponse.success(null, "회원 탈퇴가 완료되었습니다"));
     }
 }
