@@ -10,10 +10,9 @@ spring:
     name: auth-service-dev
 
   datasource:
-    # Auth Service는 3307 포트 사용 (Boilerplate는 3306)
     url: jdbc:mysql://localhost:3307/hamkkebu_auth?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8
     username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:}
+    password: ${DB_PASSWORD:root}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
