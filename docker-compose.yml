@@ -45,7 +45,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://database:3306/${DB_NAME:-hamkkebu_auth}?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
-      JWT_SECRET: ${JWT_SECRET}
+      JWT_SECRET: ${JWT_SECRET:-hamkkebu-dev-jwt-secret-key-minimum-256-bits-long-enough}
       # 공유 인프라 네트워크의 Kafka에 연결 (컨테이너 이름 사용)
       KAFKA_BOOTSTRAP_SERVERS: hamkkebu-boilerplate-kafka:29092
       # Keycloak SSO 설정 (Docker 컨테이너에서 호스트 머신 접근)
