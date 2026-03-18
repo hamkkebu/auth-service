@@ -1,0 +1,250 @@
+.leaveContainer {
+  padding: 32px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+}
+
+.leaveCard {
+  background: #ffffff;
+  border: 1px solid #e1e5eb;
+  border-radius: 12px;
+  padding: 32px;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.warningIcon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  background: #fef2f2;
+  border: 2px solid #fecaca;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.warningIcon svg {
+  width: 32px;
+  height: 32px;
+  color: #dc2626;
+}
+
+.leaveHeader {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.leaveTitle {
+  font-size: 24px;
+  font-weight: 700;
+  color: #333333;
+  margin: 0 0 6px 0;
+}
+
+.leaveSubtitle {
+  color: #666666;
+  font-size: 14px;
+  margin: 0;
+}
+
+.warningMessage {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.warningContent h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #dc2626;
+  font-size: 14px;
+  margin: 0 0 10px 0;
+  font-weight: 600;
+}
+
+.warningContent h3 svg { width: 16px; height: 16px; }
+
+.warningContent ul {
+  margin: 0;
+  padding-left: 20px;
+  color: #666666;
+}
+
+.warningContent li {
+  margin: 6px 0;
+  font-size: 13px;
+  line-height: 1.5;
+  list-style: disc;
+}
+
+.leaveForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.inputLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: #333333;
+}
+
+.inputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.inputIcon {
+  position: absolute;
+  left: 12px;
+  width: 18px;
+  height: 18px;
+  color: #999999;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.inputIcon svg { width: 18px; height: 18px; }
+
+.inputField {
+  width: 100%;
+  padding: 12px 12px 12px 40px;
+  background: #ffffff;
+  border: 1px solid #e1e5eb;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #333333;
+  transition: all 0.2s;
+  outline: none;
+  font-family: inherit;
+}
+
+.inputField::placeholder { color: #999999; }
+.inputField:hover { border-color: #c4cad3; }
+
+.inputField:focus {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.08);
+}
+
+.inputWrapper:focus-within .inputIcon { color: #dc2626; }
+
+.confirmationCheckbox {
+  background: #f9fafb;
+  border: 1px solid #e1e5eb;
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  color: #333333;
+  font-size: 13px;
+}
+
+.customCheckbox {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 2px solid #d1d5db;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.customCheckbox.checked {
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+.customCheckbox svg { width: 12px; height: 12px; color: white; }
+
+.buttonGroup {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.btnCancel,
+.btnLeave {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.btnCancel svg, .btnLeave svg { width: 16px; height: 16px; }
+
+.btnCancel {
+  background: #f5f7fa;
+  color: #666666;
+  border: 1px solid #e1e5eb;
+}
+
+.btnCancel:hover { background: #e8ebf0; }
+
+.btnLeave {
+  background: #dc2626;
+  color: white;
+}
+
+.btnLeave:hover:not(:disabled) { background: #b91c1c; }
+
+.btnLeave:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.loadingSpinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 640px) {
+  .leaveCard { padding: 20px; }
+  .leaveTitle { font-size: 20px; }
+  .buttonGroup { flex-direction: column; }
+}

@@ -76,7 +76,7 @@ keycloak:
     realm: ${KEYCLOAK_ADMIN_REALM:master}
     client-id: ${KEYCLOAK_ADMIN_CLIENT_ID:admin-cli}
     username: ${KEYCLOAK_ADMIN_USERNAME:admin}
-    password: ${KEYCLOAK_ADMIN_PASSWORD:admin}
+    password: ${KEYCLOAK_ADMIN_PASSWORD:Hamkkebu2024!}
 
 # Spring Security OAuth2 Resource Server 설정 (Keycloak 연동)
 spring.security.oauth2.resourceserver.jwt:

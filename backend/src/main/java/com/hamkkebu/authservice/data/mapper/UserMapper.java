@@ -1,5 +1,6 @@
 package com.hamkkebu.authservice.data.mapper;
 
+import com.hamkkebu.authservice.data.dto.ProfileUpdateRequest;
 import com.hamkkebu.authservice.data.dto.UserRequest;
 import com.hamkkebu.authservice.data.dto.UserResponse;
 import com.hamkkebu.authservice.data.entity.User;
@@ -60,4 +61,28 @@ public interface UserMapper {
     @Mapping(target = "isDeleted", ignore = true)
     @Mapping(target = "deletedAt", ignore = true)
     void updateEntity(UserRequest request, @MappingTarget User user);
+
+    /**
+     * ProfileUpdateRequest DTO로 기존 User 엔티티 업데이트
+     *
+     * <p>username, password, role 등 민감한 필드는 업데이트하지 않습니다.</p>
+     *
+     * @param request ProfileUpdateRequest DTO
+     * @param user 업데이트할 User 엔티티
+     */
+    @Mapping(target = "userId", ignore = true)
+    @Mapping(target = "username", ignore = true)
+    @Mapping(target = "passwordHash", ignore = true)
+    @Mapping(target = "keycloakUserId", ignore = true)
+    @Mapping(target = "isActive", ignore = true)
+    @Mapping(target = "isVerified", ignore = true)
+    @Mapping(target = "lastLoginAt", ignore = true)
+    @Mapping(target = "role", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "createdBy", ignore = true)
+    @Mapping(target = "updatedBy", ignore = true)
+    @Mapping(target = "isDeleted", ignore = true)
+    @Mapping(target = "deletedAt", ignore = true)
+    void updateProfileFromRequest(ProfileUpdateRequest request, @MappingTarget User user);
 }

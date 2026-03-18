@@ -97,7 +97,7 @@ public class User extends BaseEntity {
      * <p>권한 종류: USER, ADMIN, DEVELOPER</p>
      */
     @Enumerated(EnumType.STRING)
-    @Column(name = "role", nullable = false, length = 20)
+    @Column(name = "user_role", nullable = false, length = 20)
     @Builder.Default
     private Role role = Role.USER;
 

@@ -1,6 +1,8 @@
 package com.hamkkebu.authservice.service;
 
 import com.hamkkebu.authservice.data.dto.DuplicateCheckResponse;
+import com.hamkkebu.authservice.data.dto.PasswordChangeRequest;
+import com.hamkkebu.authservice.data.dto.ProfileUpdateRequest;
 import com.hamkkebu.authservice.data.dto.UserRequest;
 import com.hamkkebu.authservice.data.dto.UserResponse;
 import com.hamkkebu.authservice.data.entity.User;
@@ -222,6 +224,107 @@ public class UserService {
 
         // 회원탈퇴 이벤트 발행 (Kafka 연결 실패 시 무시, 비동기 처리)
         userEventPublisher.publishUserDeletedEvent(user.getUserId());
+    }
+
+    /**
+     * 사용자 프로필 업데이트
+     *
+     * <p>Keycloak과 로컬 DB 모두에 사용자 정보를 업데이트합니다.</p>
+     * <p>Keycloak에는 email, firstName, lastName만 동기화하고,
+     * 나머지 프로필 정보는 로컬 DB에만 저장합니다.</p>
+     *
+     * @param userId  사용자 ID
+     * @param request 프로필 수정 요청
+     * @return 수정된 사용자 정보
+     */
+    @Transactional
+    public UserResponse updateProfile(Long userId, ProfileUpdateRequest request) {
+        log.info("사용자 프로필 수정 시작: userId={}", userId);
+
+        // 사용자 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        // Keycloak 사용자인 경우 Keycloak 정보도 업데이트
+        if (StringUtils.hasText(user.getKeycloakUserId())) {
+            try {
+                keycloakAdminService.updateUser(
+                        user.getKeycloakUserId(),
+                        request.getEmail(),
+                        request.getFirstName(),
+                        request.getLastName()
+                );
+            } catch (Exception e) {
+                log.error("Keycloak 사용자 업데이트 실패: keycloakUserId={}, error={}",
+                        user.getKeycloakUserId(), e.getMessage());
+                throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "프로필 수정 중 오류가 발생했습니다");
+            }
+        }
+
+        // 로컬 DB 업데이트
+        userMapper.updateProfileFromRequest(request, user);
+        User savedUser = userRepository.save(user);
+
+        log.info("사용자 프로필 수정 완료: userId={}", savedUser.getUserId());
+
+        // 프로필 수정 이벤트 발행 (다른 서비스에 동기화)
+        userEventPublisher.publishUserUpdatedEvent(savedUser.getUserId());
+
+        return userMapper.toDto(savedUser);
+    }
+
+    /**
+     * 비밀번호 변경
+     *
+     * <p>현재 비밀번호를 확인한 후, Keycloak과 로컬 DB 모두에 새 비밀번호를 반영합니다.</p>
+     *
+     * @param userId  사용자 ID
+     * @param request 비밀번호 변경 요청
+     */
+    @Transactional
+    public void changePassword(Long userId, PasswordChangeRequest request) {
+        log.info("비밀번호 변경 시작: userId={}", userId);
+
+        // 새 비밀번호 확인 일치 검증
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new BusinessException(ErrorCode.VALIDATION_FAILED, "새 비밀번호가 일치하지 않습니다");
+        }
+
+        // 새 비밀번호 형식 검증
+        passwordValidator.validatePasswordFormat(request.getNewPassword());
+
+        // 사용자 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        // 현재 비밀번호 확인
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPasswordHash())) {
+            log.warn("현재 비밀번호 불일치: userId={}", userId);
+            throw new BusinessException(ErrorCode.AUTHENTICATION_FAILED, "현재 비밀번호가 일치하지 않습니다");
+        }
+
+        // 현재 비밀번호와 새 비밀번호가 같은지 확인
+        if (passwordEncoder.matches(request.getNewPassword(), user.getPasswordHash())) {
+            throw new BusinessException(ErrorCode.VALIDATION_FAILED, "현재 비밀번호와 동일한 비밀번호로 변경할 수 없습니다");
+        }
+
+        // Keycloak 사용자인 경우 Keycloak 비밀번호도 변경
+        if (StringUtils.hasText(user.getKeycloakUserId())) {
+            try {
+                keycloakAdminService.resetPassword(user.getKeycloakUserId(), request.getNewPassword());
+            } catch (Exception e) {
+                log.error("Keycloak 비밀번호 변경 실패: keycloakUserId={}, error={}",
+                        user.getKeycloakUserId(), e.getMessage());
+                throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "비밀번호 변경 중 오류가 발생했습니다");
+            }
+        }
+
+        // 로컬 DB 비밀번호 업데이트
+        String encodedNewPassword = passwordEncoder.encode(request.getNewPassword());
+        user.updatePassword(encodedNewPassword);
+        userRepository.save(user);
+
+        log.info("비밀번호 변경 완료: userId={}", userId);
     }
 
     /**

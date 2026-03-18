@@ -10,6 +10,8 @@ export const API_ENDPOINTS = {
   USERS: '/api/v1/users',
   USER_BY_ID: (id: string) => `/api/v1/users/${id}`,
   USER_BY_USERNAME: (username: string) => `/api/v1/users/username/${username}`,
+  USER_ME: '/api/v1/users/me',
+  USER_ME_PASSWORD: '/api/v1/users/me/password',
   USER_CHECK_DUPLICATE: (username: string) => `/api/v1/users/check/${username}`,
   USER_CHECK_NICKNAME_DUPLICATE: (nickname: string) => `/api/v1/users/check/nickname/${nickname}`,
 

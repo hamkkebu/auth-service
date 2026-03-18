@@ -247,6 +247,64 @@ public class KeycloakAdminService {
     }
 
     /**
+     * Keycloak 사용자 정보 업데이트
+     *
+     * @param keycloakUserId Keycloak 사용자 ID (sub claim)
+     * @param email          이메일
+     * @param firstName      이름
+     * @param lastName       성
+     */
+    public void updateUser(String keycloakUserId, String email, String firstName, String lastName) {
+        try {
+            RealmResource realmResource = keycloak.realm(realm);
+            UserResource userResource = realmResource.users().get(keycloakUserId);
+
+            UserRepresentation user = userResource.toRepresentation();
+            user.setEmail(email);
+            user.setFirstName(firstName);
+            user.setLastName(lastName);
+
+            userResource.update(user);
+
+            log.info("Keycloak 사용자 정보 업데이트 완료: keycloakUserId={}", keycloakUserId);
+        } catch (NotFoundException e) {
+            log.warn("Keycloak 사용자를 찾을 수 없음: keycloakUserId={}", keycloakUserId);
+            throw new RuntimeException("Keycloak 사용자를 찾을 수 없습니다");
+        } catch (Exception e) {
+            log.error("Keycloak 사용자 업데이트 실패: keycloakUserId={}, error={}", keycloakUserId, e.getMessage(), e);
+            throw new RuntimeException("Keycloak 사용자 업데이트 실패", e);
+        }
+    }
+
+    /**
+     * Keycloak 사용자 비밀번호 변경
+     *
+     * @param keycloakUserId Keycloak 사용자 ID (sub claim)
+     * @param newPassword    새 비밀번호
+     */
+    public void resetPassword(String keycloakUserId, String newPassword) {
+        try {
+            RealmResource realmResource = keycloak.realm(realm);
+            UserResource userResource = realmResource.users().get(keycloakUserId);
+
+            CredentialRepresentation credential = new CredentialRepresentation();
+            credential.setType(CredentialRepresentation.PASSWORD);
+            credential.setValue(newPassword);
+            credential.setTemporary(false);
+
+            userResource.resetPassword(credential);
+
+            log.info("Keycloak 비밀번호 변경 완료: keycloakUserId={}", keycloakUserId);
+        } catch (NotFoundException e) {
+            log.warn("Keycloak 사용자를 찾을 수 없음: keycloakUserId={}", keycloakUserId);
+            throw new RuntimeException("Keycloak 사용자를 찾을 수 없습니다");
+        } catch (Exception e) {
+            log.error("Keycloak 비밀번호 변경 실패: keycloakUserId={}, error={}", keycloakUserId, e.getMessage(), e);
+            throw new RuntimeException("Keycloak 비밀번호 변경 실패", e);
+        }
+    }
+
+    /**
      * username으로 Keycloak 사용자 ID 조회
      *
      * @param username 사용자 아이디

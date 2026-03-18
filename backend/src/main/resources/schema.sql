@@ -26,7 +26,7 @@ CREATE TABLE tbl_users (
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     is_verified BOOLEAN NOT NULL DEFAULT FALSE,
     last_login_at TIMESTAMP NULL,
-    role VARCHAR(20) NOT NULL DEFAULT 'USER',
+    user_role VARCHAR(20) NOT NULL DEFAULT 'USER',
     -- BaseEntity fields (auditing and soft delete)
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
     deleted_at TIMESTAMP NULL,
@@ -56,7 +56,7 @@ CREATE TABLE tbl_outbox_event (
     payload JSON NOT NULL,                     -- 전체 이벤트 객체를 JSON으로 직렬화
 
     -- Status Management
-    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',  -- PENDING, PUBLISHED, FAILED
+    event_status VARCHAR(20) NOT NULL DEFAULT 'PENDING',  -- PENDING, PUBLISHED, FAILED
     retry_count INT NOT NULL DEFAULT 0,        -- 재시도 횟수
     max_retry INT NOT NULL DEFAULT 3,          -- 최대 재시도 횟수
 
@@ -72,7 +72,7 @@ CREATE TABLE tbl_outbox_event (
     version BIGINT DEFAULT 0,                  -- 낙관적 락을 위한 버전 필드
 
     -- Indexes
-    INDEX idx_status_created (status, created_at),
+    INDEX idx_event_status_created (event_status, created_at),
     INDEX idx_event_id (event_id),
     INDEX idx_topic (topic)
 ) COMMENT='Transactional Outbox 이벤트 테이블 - DB 트랜잭션과 이벤트 발행의 원자성 보장';

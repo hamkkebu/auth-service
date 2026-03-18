@@ -2,6 +2,7 @@ package com.hamkkebu.authservice.service;
 
 import com.hamkkebu.authservice.data.event.UserDeletedEvent;
 import com.hamkkebu.authservice.data.event.UserRegisteredEvent;
+import com.hamkkebu.authservice.data.event.UserUpdatedEvent;
 import com.hamkkebu.boilerplate.common.publisher.EventPublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +39,22 @@ public class UserEventPublisher {
             log.info("회원가입 이벤트 발행 완료: userId={}, eventId={}", userId, event.getEventId());
         } catch (Exception e) {
             log.warn("회원가입 이벤트 발행 실패 (Kafka 연결 불가): userId={}, error={}", userId, e.getMessage());
+        }
+    }
+
+    /**
+     * 프로필 수정 이벤트 비동기 발행
+     *
+     * @param userId 사용자 ID
+     */
+    @Async("eventExecutor")
+    public void publishUserUpdatedEvent(Long userId) {
+        try {
+            UserUpdatedEvent event = UserUpdatedEvent.of(userId);
+            eventPublisher.publish(userEventsTopic, event);
+            log.info("프로필 수정 이벤트 발행 완료: userId={}, eventId={}", userId, event.getEventId());
+        } catch (Exception e) {
+            log.warn("프로필 수정 이벤트 발행 실패 (Kafka 연결 불가): userId={}, error={}", userId, e.getMessage());
         }
     }
 

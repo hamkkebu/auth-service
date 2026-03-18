@@ -2,6 +2,8 @@ package com.hamkkebu.authservice.controller;
 
 import com.hamkkebu.authservice.data.dto.DeleteUserRequest;
 import com.hamkkebu.authservice.data.dto.DuplicateCheckResponse;
+import com.hamkkebu.authservice.data.dto.PasswordChangeRequest;
+import com.hamkkebu.authservice.data.dto.ProfileUpdateRequest;
 import com.hamkkebu.authservice.data.dto.UserRequest;
 import com.hamkkebu.authservice.data.dto.UserResponse;
 import com.hamkkebu.authservice.service.UserService;
@@ -131,6 +133,56 @@ public class UserController {
         }
         UserResponse response = userService.getUserById(currentUserId);
         return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    /**
+     * 내 프로필 수정 (로그인한 사용자 본인)
+     *
+     * <p>Keycloak과 로컬 DB 모두에 사용자 정보를 업데이트합니다.</p>
+     *
+     * @param currentUserId 현재 로그인한 사용자 ID
+     * @param request 프로필 수정 요청
+     * @return 수정된 사용자 정보
+     */
+    @Operation(
+        summary = "내 프로필 수정",
+        description = "현재 로그인한 사용자의 프로필 정보를 수정합니다. Keycloak과 DB에 동시 반영됩니다."
+    )
+    @PutMapping("/me")
+    public ResponseEntity<ApiResponse<UserResponse>> updateMyProfile(
+            @Parameter(hidden = true) @CurrentUser Long currentUserId,
+            @Valid @RequestBody ProfileUpdateRequest request) {
+        log.info("프로필 수정 요청: userId={}", currentUserId);
+        if (currentUserId == null) {
+            throw new BusinessException(ErrorCode.AUTHENTICATION_FAILED);
+        }
+        UserResponse response = userService.updateProfile(currentUserId, request);
+        return ResponseEntity.ok(ApiResponse.success(response, "프로필이 수정되었습니다"));
+    }
+
+    /**
+     * 비밀번호 변경 (로그인한 사용자 본인)
+     *
+     * <p>현재 비밀번호를 확인한 후, Keycloak과 로컬 DB 모두에 새 비밀번호를 반영합니다.</p>
+     *
+     * @param currentUserId 현재 로그인한 사용자 ID
+     * @param request 비밀번호 변경 요청
+     * @return 성공 메시지
+     */
+    @Operation(
+        summary = "비밀번호 변경",
+        description = "현재 비밀번호를 확인한 후 새 비밀번호로 변경합니다. Keycloak과 DB에 동시 반영됩니다."
+    )
+    @PutMapping("/me/password")
+    public ResponseEntity<ApiResponse<Void>> changePassword(
+            @Parameter(hidden = true) @CurrentUser Long currentUserId,
+            @Valid @RequestBody PasswordChangeRequest request) {
+        log.info("비밀번호 변경 요청: userId={}", currentUserId);
+        if (currentUserId == null) {
+            throw new BusinessException(ErrorCode.AUTHENTICATION_FAILED);
+        }
+        userService.changePassword(currentUserId, request);
+        return ResponseEntity.ok(ApiResponse.success(null, "비밀번호가 변경되었습니다"));
     }
 
     /**

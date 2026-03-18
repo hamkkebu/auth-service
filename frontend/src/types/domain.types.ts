@@ -108,6 +108,32 @@ export interface UserResponse {
   updatedAt: string;
 }
 
+/**
+ * 프로필 수정 요청 DTO
+ */
+export interface ProfileUpdateRequest {
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  nickname?: string;
+  phone?: string;
+  country?: string;
+  city?: string;
+  state?: string;
+  street1?: string;
+  street2?: string;
+  zip?: string;
+}
+
+/**
+ * 비밀번호 변경 요청 DTO
+ */
+export interface PasswordChangeRequest {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
 export interface UserStatsResponse {
   totalUsers: number;
   activeUsers: number;

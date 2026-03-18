@@ -1,0 +1,333 @@
+.adminContainer {
+  padding: 32px 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dashboardContent { width: 100%; }
+
+.dashboardHeader {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.headerIcon {
+  width: 52px;
+  height: 52px;
+  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.2);
+}
+
+.headerIcon svg { width: 26px; height: 26px; color: white; }
+
+.dashboardTitle {
+  font-size: 28px;
+  font-weight: 700;
+  color: #333333;
+  margin: 0 0 4px 0;
+}
+
+.dashboardSubtitle { color: #666666; font-size: 14px; margin: 0; }
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.statCard {
+  background: #ffffff;
+  border: 1px solid #e1e5eb;
+  border-radius: 10px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: all 0.2s;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+}
+
+.statCard:hover { border-color: #c4cad3; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06); }
+
+.statIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.statIcon svg { width: 22px; height: 22px; }
+.statIcon.users { background: #eff6ff; color: #3b82f6; }
+.statIcon.active { background: #f0fdf4; color: #22c55e; }
+.statIcon.admin { background: #fffbeb; color: #f59e0b; }
+.statIcon.deleted { background: #fef2f2; color: #ef4444; }
+
+.statValue { font-size: 28px; font-weight: 700; color: #333333; line-height: 1; }
+.statLabel { font-size: 13px; color: #666666; margin-top: 4px; }
+
+.tabs { display: flex; gap: 6px; margin-bottom: 16px; }
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  background: #f5f7fa;
+  border: 1px solid #e1e5eb;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #666666;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.tab svg { width: 16px; height: 16px; }
+.tab:hover { background: #e8ebf0; color: #333333; }
+.tab.active { background: #7c3aed; border-color: #7c3aed; color: white; }
+
+.tableCard {
+  background: #ffffff;
+  border: 1px solid #e1e5eb;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+}
+
+.tableWrapper { overflow-x: auto; }
+
+.loading, .errorMessage { padding: 48px 20px; text-align: center; color: #666666; }
+
+.errorMessage {
+  color: #dc2626;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.errorMessage svg { width: 36px; height: 36px; }
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #e1e5eb;
+  border-top-color: #7c3aed;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 14px;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.userTable { width: 100%; border-collapse: collapse; }
+
+.userTable th {
+  background: #f9fafb;
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  color: #666666;
+  font-size: 13px;
+  border-bottom: 1px solid #e1e5eb;
+  white-space: nowrap;
+}
+
+.userTable td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f2f5;
+  font-size: 14px;
+  color: #333333;
+}
+
+.userTable tbody tr { transition: background 0.15s; }
+.userTable tbody tr:hover { background: #f9fafb; }
+
+.tdId { color: #999999; font-size: 13px; }
+.tdUsername { font-weight: 600; color: #333333; }
+.tdEmail { color: #666666; font-size: 13px; }
+.tdDate { color: #999999; font-size: 13px; white-space: nowrap; }
+
+.roleBadge, .statusBadge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.roleBadge.user { background: #eff6ff; color: #3b82f6; }
+.roleBadge.admin { background: #fef2f2; color: #ef4444; }
+.roleBadge.developer { background: #fffbeb; color: #d97706; }
+.statusBadge.active { background: #f0fdf4; color: #16a34a; }
+.statusBadge.inactive { background: #f5f7fa; color: #999999; }
+
+.tdActions { display: flex; gap: 6px; }
+
+.btnAction {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #e1e5eb;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  color: #666666;
+  font-family: inherit;
+}
+
+.btnAction svg { width: 14px; height: 14px; }
+.btnAction.role { color: #7c3aed; border-color: #ddd6fe; }
+.btnAction.role:hover:not(:disabled) { background: #f5f3ff; }
+.btnAction.danger { color: #dc2626; border-color: #fecaca; }
+.btnAction.danger:hover:not(:disabled) { background: #fef2f2; }
+.btnAction.success { color: #16a34a; border-color: #bbf7d0; }
+.btnAction.success:hover:not(:disabled) { background: #f0fdf4; }
+.btnAction:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.modalOverlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: #ffffff;
+  border: 1px solid #e1e5eb;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 480px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.modalHeader {
+  padding: 20px 24px;
+  border-bottom: 1px solid #e1e5eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modalHeader h2 { margin: 0; font-size: 18px; color: #333333; font-weight: 600; }
+
+.modalClose {
+  background: #f5f7fa;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #666666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.modalClose svg { width: 16px; height: 16px; }
+.modalClose:hover { background: #e8ebf0; color: #333333; }
+
+.modalBody { padding: 24px; }
+
+.modalDesc { color: #666666; margin: 0 0 16px 0; font-size: 14px; }
+.modalDesc strong { color: #333333; }
+
+.roleOptions { display: flex; flex-direction: column; gap: 10px; }
+.roleOption { display: block; cursor: pointer; }
+.roleOption input { display: none; }
+
+.roleOptionContent {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  background: #f9fafb;
+  border: 2px solid #e1e5eb;
+  border-radius: 10px;
+  transition: all 0.2s;
+}
+
+.roleOption:hover .roleOptionContent { border-color: #c4cad3; }
+.roleOption.selected .roleOptionContent { border-color: #7c3aed; background: #f5f3ff; }
+
+.roleOptionIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.roleOptionIcon svg { width: 20px; height: 20px; }
+.roleOptionIcon.user { background: #eff6ff; color: #3b82f6; }
+.roleOptionIcon.developer { background: #fffbeb; color: #d97706; }
+.roleOptionIcon.admin { background: #fef2f2; color: #ef4444; }
+
+.roleOptionTitle { font-weight: 600; color: #333333; font-size: 14px; }
+.roleOptionDesc { font-size: 12px; color: #999999; margin-top: 2px; }
+
+.modalFooter {
+  padding: 20px 24px;
+  border-top: 1px solid #e1e5eb;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.btnPrimary, .btnSecondary {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.btnPrimary { background: #7c3aed; color: white; }
+.btnPrimary:hover { background: #6d28d9; }
+
+.btnSecondary { background: #f5f7fa; color: #666666; border: 1px solid #e1e5eb; }
+.btnSecondary:hover { background: #e8ebf0; }
+
+@media (max-width: 768px) {
+  .adminContainer { padding: 16px; }
+  .dashboardHeader { flex-direction: column; text-align: center; }
+  .statsGrid { grid-template-columns: 1fr 1fr; }
+  .tabs { flex-wrap: wrap; }
+  .userTable th, .userTable td { padding: 10px 8px; font-size: 12px; }
+  .tdActions { flex-direction: column; gap: 4px; }
+}
