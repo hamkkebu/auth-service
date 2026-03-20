@@ -19,12 +19,7 @@ export default function ChangePassword() {
   const [showNewPw, setShowNewPw] = useState(false);
   const [showConfirmPw, setShowConfirmPw] = useState(false);
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      alert('로그인이 필요합니다.');
-      navigate('../profile');
-    }
-  }, [isAuthenticated, navigate]);
+  // App.tsx에서 이미 인증 가드를 처리하므로 별도 체크 불필요
 
   const handleChange = (field: keyof PasswordChangeRequest, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }));

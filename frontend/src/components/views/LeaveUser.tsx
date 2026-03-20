@@ -13,12 +13,7 @@ export default function LeaveUser() {
   const [password, setPassword] = useState('');
   const [confirmed, setConfirmed] = useState(false);
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      alert('로그인이 필요합니다.');
-      navigate(ROUTES.LOGIN);
-    }
-  }, [isAuthenticated, navigate]);
+  // App.tsx에서 이미 인증 가드를 처리하므로 별도 체크 불필요
 
   const confirmAndLeave = () => {
     if (!confirmed) {
@@ -33,7 +28,7 @@ export default function LeaveUser() {
 
     if (!currentUser) {
       alert('로그인 정보를 찾을 수 없습니다.');
-      navigate(ROUTES.LOGIN);
+      navigate('../profile');
       return;
     }
 
@@ -65,14 +60,13 @@ export default function LeaveUser() {
         onSuccess: async () => {
           alert('회원 탈퇴가 완료되었습니다.');
           await logout();
-          navigate(ROUTES.LOGIN);
         },
       }
     );
   };
 
   const goBack = () => {
-    navigate(ROUTES.USER_INFO);
+    navigate('../profile');
   };
 
   return (

@@ -2,12 +2,8 @@
 CREATE DATABASE IF NOT EXISTS hamkkebu_auth;
 USE hamkkebu_auth;
 
--- Drop existing tables
-DROP TABLE IF EXISTS tbl_users;
-DROP TABLE IF EXISTS tbl_outbox_event;
-
 -- Create users table
-CREATE TABLE tbl_users (
+CREATE TABLE IF NOT EXISTS tbl_users (
     user_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) NOT NULL,
     email VARCHAR(100) NOT NULL,
@@ -42,7 +38,7 @@ CREATE TABLE tbl_users (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Create Transactional Outbox Event table
-CREATE TABLE tbl_outbox_event (
+CREATE TABLE IF NOT EXISTS tbl_outbox_event (
     -- Primary Key
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
 

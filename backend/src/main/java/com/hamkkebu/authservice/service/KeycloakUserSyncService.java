@@ -31,6 +31,7 @@ import java.util.Optional;
 public class KeycloakUserSyncService {
 
     private final UserRepository userRepository;
+    private final UserEventPublisher userEventPublisher;
 
     private static final String REALM_ACCESS_CLAIM = "realm_access";
     private static final String ROLES_CLAIM = "roles";
@@ -101,6 +102,9 @@ public class KeycloakUserSyncService {
         User savedUser = userRepository.save(newUser);
         log.info("새 사용자 JIT 프로비저닝: userId={}, username={}, keycloakUserId={}, role={}",
                 savedUser.getUserId(), savedUser.getUsername(), keycloakUserId, role);
+
+        // 회원가입 이벤트 발행 (다른 서비스에 사용자 동기화)
+        userEventPublisher.publishUserRegisteredEvent(savedUser.getUserId());
 
         return savedUser;
     }

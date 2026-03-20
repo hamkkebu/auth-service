@@ -137,10 +137,9 @@ export default function UserInfo() {
   };
 
   const goToLogout = async () => {
-    console.log('[UserInfo] goToLogout called');
+    if (!confirm('로그아웃 하시겠습니까?')) return;
     try {
       await logout();
-      console.log('[UserInfo] logout completed');
     } catch (error) {
       console.error('[UserInfo] logout error:', error);
     }

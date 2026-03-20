@@ -27,12 +27,12 @@
 .brandIcon {
   width: 48px;
   height: 48px;
-  background: linear-gradient(135deg, #4a90d9, #357abd);
+  background: linear-gradient(135deg, #7c3aed, #6366f1);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(74, 144, 217, 0.25);
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
 }
 
 .brandIcon svg {
@@ -80,7 +80,7 @@
 .userCount svg {
   width: 20px;
   height: 20px;
-  color: #4a90d9;
+  color: #7c3aed;
 }
 
 .btnDownload {
@@ -121,8 +121,8 @@
 }
 
 .userCard:hover {
-  border-color: #4a90d9;
-  box-shadow: 0 2px 12px rgba(74, 144, 217, 0.1);
+  border-color: #7c3aed;
+  box-shadow: 0 2px 12px rgba(124, 58, 237, 0.1);
 }
 
 .userCardHeader {
@@ -138,7 +138,7 @@
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #4a90d9, #357abd);
+  background: linear-gradient(135deg, #7c3aed, #6366f1);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -164,7 +164,7 @@
 
 .userIdBadge {
   padding: 4px 12px;
-  background: #4a90d9;
+  background: #7c3aed;
   color: white;
   border-radius: 16px;
   font-size: 12px;
@@ -190,7 +190,7 @@
 .infoIcon {
   width: 18px;
   height: 18px;
-  color: #4a90d9;
+  color: #7c3aed;
   flex-shrink: 0;
   margin-top: 2px;
 }
@@ -234,24 +234,24 @@
   gap: 14px;
   width: 100%;
   padding: 14px 16px;
-  background: #f0f5ff;
-  border: 1px solid #bfdbfe;
+  background: #f5f3ff;
+  border: 1px solid #ddd6fe;
   border-radius: 10px;
   text-decoration: none;
   transition: all 0.2s;
   cursor: pointer;
 }
 
-.btnLedger:hover { background: #dbeafe; border-color: #93c5fd; }
+.btnLedger:hover { background: #ede9fe; border-color: #c4b5fd; }
 
-.btnLedger > svg:first-child { width: 28px; height: 28px; color: #4a90d9; flex-shrink: 0; }
+.btnLedger > svg:first-child { width: 28px; height: 28px; color: #7c3aed; flex-shrink: 0; }
 
 .btnLedgerContent { flex: 1; display: flex; flex-direction: column; gap: 2px; text-align: left; }
 .btnLedgerTitle { font-size: 14px; font-weight: 600; color: #333333; }
 .btnLedgerSubtitle { font-size: 12px; color: #666666; }
 
 .arrowIcon { width: 18px; height: 18px; color: #999999; transition: transform 0.2s; }
-.btnLedger:hover .arrowIcon { color: #4a90d9; transform: translateX(3px); }
+.btnLedger:hover .arrowIcon { color: #7c3aed; transform: translateX(3px); }
 
 .navigationButtons { display: flex; gap: 10px; margin-top: 20px; }
 
@@ -274,12 +274,12 @@
 .btnPassword svg, .btnSecondary svg, .btnDanger svg { width: 16px; height: 16px; }
 
 .btnPassword {
-  background: #f0f5ff;
-  color: #4a90d9;
-  border: 1px solid #bfdbfe;
+  background: #f5f3ff;
+  color: #7c3aed;
+  border: 1px solid #ddd6fe;
 }
 
-.btnPassword:hover { background: #dbeafe; border-color: #93c5fd; }
+.btnPassword:hover { background: #ede9fe; border-color: #c4b5fd; }
 
 .btnSecondary {
   background: #f5f7fa;
@@ -287,7 +287,7 @@
   border: 1px solid #e1e5eb;
 }
 
-.btnSecondary:hover { background: #e8ebf0; color: #4a90d9; }
+.btnSecondary:hover { background: #e8ebf0; color: #7c3aed; }
 
 .btnDanger {
   background: #fef2f2;
@@ -303,9 +303,9 @@
   align-items: center;
   gap: 8px;
   padding: 8px 14px;
-  background: #f0f5ff;
-  color: #4a90d9;
-  border: 1px solid #bfdbfe;
+  background: #f5f3ff;
+  color: #7c3aed;
+  border: 1px solid #ddd6fe;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
@@ -316,8 +316,8 @@
 .btnEdit svg { width: 16px; height: 16px; }
 
 .btnEdit:hover {
-  background: #dbeafe;
-  border-color: #93c5fd;
+  background: #ede9fe;
+  border-color: #c4b5fd;
 }
 
 /* Edit Form */
@@ -364,8 +364,8 @@
 }
 
 .formInput:focus {
-  border-color: #4a90d9;
-  box-shadow: 0 0 0 3px rgba(74, 144, 217, 0.1);
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
 }
 
 .formInput::placeholder {
@@ -399,13 +399,13 @@
 }
 
 .btnSave {
-  background: #4a90d9;
+  background: #7c3aed;
   color: white;
-  border: 1px solid #357abd;
+  border: 1px solid #6d28d9;
 }
 
 .btnSave:hover {
-  background: #357abd;
+  background: #6d28d9;
 }
 
 .btnSave:disabled,
